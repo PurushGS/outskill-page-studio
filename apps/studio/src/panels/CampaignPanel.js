@@ -35,10 +35,7 @@ export class CampaignPanel extends Panel {
     const { campaign } = this.store.page;
     const format = findFormat(campaign.format);
     return [
-      el('div', { class: 'campaign-head' },
-        el('span', { class: 'format-badge' }, `${format.label} page`),
-        el('span', { class: 'form-id' }, 'Form ID ', el('code', {}, campaign.formId || 'given on first Publish')),
-      ),
+      el('div', { class: 'campaign-head' }, el('span', { class: 'format-badge' }, `${format.label} page`)),
       el('h3', { class: 'panel__title' }, 'Campaign'),
       this.#campaignFields(),
       el('h3', { class: 'panel__title' }, 'After someone applies'),
@@ -52,31 +49,44 @@ export class CampaignPanel extends Panel {
     ];
   }
 
-  /** In a draft, typing the campaign name also suggests the campaign ID and page link until those are edited by hand. */
+  /**
+   * The page link is made from the campaign name when the page is first
+   * published, then stays fixed. In a draft, the name also suggests the
+   * campaign ID until that is edited by hand.
+   */
   #campaignFields() {
     const { campaign, slug } = this.store.page;
     const draft = this.store.isDraft;
-    const autoFill = { id: draft && !campaign.id, slug: draft && !slug };
+    let autoFillId = draft && !campaign.id;
 
-    const idInput = el('input', { class: 'input input--code', value: campaign.id, placeholder: 'e.g. ai-jobs-nov-2026', oninput: (e) => { autoFill.id = false; this.store.set(['campaign', 'id'], e.target.value.toLowerCase()); } });
-    const slugInput = el('input', { class: 'input input--code', value: slug, placeholder: 'e.g. ai-jobs', readonly: !draft, oninput: (e) => { autoFill.slug = false; this.store.set(['slug'], e.target.value.toLowerCase()); } });
+    const pageLink = el('code', { class: 'page-link' });
+    const showLink = (value) => { pageLink.textContent = `${location.host}/${value || '…'}`; };
+    showLink(slug);
+
+    const idInput = el('input', { class: 'input input--code', value: campaign.id, placeholder: 'e.g. ai-jobs-nov-2026', oninput: (e) => { autoFillId = false; this.store.set(['campaign', 'id'], e.target.value.toLowerCase()); } });
+    const formIdInput = el('input', { class: 'input input--code', value: campaign.formId, placeholder: 'ID from our application-form system', oninput: (e) => this.store.set(['campaign', 'formId'], e.target.value.trim()) });
     const nameInput = el('input', {
       class: 'input',
       value: campaign.name,
       placeholder: 'e.g. AI Jobs guide · Nov 2026',
       oninput: (e) => {
         const entries = [[['campaign', 'name'], e.target.value]];
-        if (autoFill.id) entries.push([['campaign', 'id'], (idInput.value = slugify(e.target.value))]);
-        if (autoFill.slug) entries.push([['slug'], (slugInput.value = slugify(e.target.value).slice(0, 40))]);
+        if (autoFillId) entries.push([['campaign', 'id'], (idInput.value = slugify(e.target.value))]);
+        if (draft) {
+          entries.push([['slug'], slugify(e.target.value)]);
+          showLink(slugify(e.target.value));
+        }
         this.store.setMany(entries);
       },
     });
 
     return [
-      field('Campaign name', nameInput, 'Saved with every application, so you can filter by campaign later'),
+      field('Campaign name', nameInput, draft
+        ? 'Saved with every application. The page link is made from it, so choose carefully: the link cannot change after publishing'
+        : 'Saved with every application. Renaming does not change the page link, so shared links keep working'),
+      field('Page link', pageLink),
+      field('Form ID', formIdInput, 'Required. Every application from this page is saved under this form ID'),
       field('Campaign ID', idInput, 'Lowercase and dashes. Becomes utm_campaign in tracked links'),
-      field('Page link', el('div', { class: 'prefixed' }, el('span', {}, `${location.host}/`), slugInput),
-        draft ? 'Choose carefully: the link cannot change after publishing' : 'Fixed after publishing so shared links never break'),
     ];
   }
 

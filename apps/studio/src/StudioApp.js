@@ -113,7 +113,7 @@ export class StudioApp {
 
   /**
    * A draft is a copy of a design with a blank campaign: nothing is claimed
-   * on the server until the first Publish, which assigns the form ID.
+   * on the server until the first Publish, which makes the page link from the campaign name.
    */
   async #startDraft(design, { confirmed = false } = {}) {
     if (!confirmed && !this.#canLeaveCurrentPage()) return;
@@ -125,7 +125,7 @@ export class StudioApp {
     this.store.load(draft, { draft: true });
     this.ui.pageSelect.prepend(el('option', { value: '', selected: true }, '✎ New page (not published yet)'));
     this.root.querySelector('[data-tab="campaign"]').click();
-    this.#setStatus(`New ${findFormat(this.format).label} page: give it a campaign name and page link on the Campaign tab, edit the design, then Publish.`);
+    this.#setStatus(`New ${findFormat(this.format).label} page: give it a campaign name and form ID on the Campaign tab, edit the design, then Publish.`);
   }
 
   // ---------- publishing ----------
@@ -138,7 +138,7 @@ export class StudioApp {
     try {
       const wasDraft = this.store.isDraft;
       const { page } = wasDraft ? await this.api.createPage(this.store.page) : await this.api.savePage(this.store.page);
-      // A new page comes back with its server-assigned form ID, so load it; an update keeps its undo history.
+      // A new page comes back with its final page link, so load it; an update keeps its undo history.
       if (wasDraft) this.store.load(page);
       else this.store.markSaved();
       if (wasDraft) {

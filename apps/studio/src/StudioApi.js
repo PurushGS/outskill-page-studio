@@ -44,7 +44,7 @@ export class StudioApi {
     return this.#request('GET', `/api/templates/${slug}`);
   }
 
-  /** First publish of a draft: the server claims the slug and assigns the form ID. */
+  /** First publish of a draft: the server makes the page link from the campaign name and claims it. */
   createPage(page) {
     return this.#request('POST', '/api/pages', page);
   }

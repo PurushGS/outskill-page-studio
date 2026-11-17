@@ -1,6 +1,6 @@
 # Page Studio
 
-Campaign landing pages for every channel: YouTube, Instagram, X, LinkedIn, Facebook and WhatsApp. Ashutosh picks a format, edits a page in **/studio** without engineering help, and publishes. Every page carries an inline application form with its own form ID. Each submission is turned into one complete **Application** record (applicant + campaign name + form ID + attribution) and handed to an engineering hook that saves it into our existing application-form table.
+Campaign landing pages for every channel: YouTube, Instagram, X, LinkedIn, Facebook and WhatsApp. Ashutosh picks a format, edits a page in **/studio** without engineering help, and publishes. Every page carries an inline application form, saved under the form ID Ashutosh enters. Each submission is turned into one complete **Application** record (applicant + campaign name + form ID + attribution) and handed to an engineering hook that saves it into our existing application-form table.
 
 ```
 Post / video / bio link → https://<site>/<slug>?utm_source=…&utm_campaign=…&utm_content=<post>
@@ -27,7 +27,11 @@ You never deploy anything. **Publish** in the studio is all it takes to put a pa
    - If it has pages, pick one from **Page**.
    - If it has none, the template opens as a new page, ready to edit.
    - **+ New page** starts a new page in the selected format with the design you're looking at.
-3. On the **Campaign** tab of a new page, type the **campaign name**. The campaign ID and page link fill themselves in (you can change them). Add the **resource links** people get after applying and the **WhatsApp community link**.
+3. On the **Campaign** tab of a new page:
+   - Type the **campaign name**. The page link is made from it (`AI Jobs · Nov 2026` → `/ai-jobs-nov-2026`) and cannot change after publishing. Renaming the campaign later keeps the same link.
+   - Type the **Form ID**: the ID of the application form in our system. It's required, and you can change it later.
+   - The campaign ID fills itself in (you can change it).
+   - Add the **resource links** people get after applying and the **WhatsApp community link**.
 4. **Content**: click any text or icon in the preview to edit it. Move sections with ↑ ↓, remove with ✕, add with **+ Add section**. The application form has a 🔒: it stays on every page.
 5. **Style**: palettes, colours, fonts, corner roundness. Check **Mobile** before publishing.
 6. Press **Publish** (⌘S). The green bar gives you the **tracked link** for that format. Paste it in the post, video description or bio.
@@ -69,8 +73,8 @@ tests/                         libraries, every block, Worker end-to-end (create
 ### Formats, form IDs and campaigns
 
 - Formats live in `packages/attribution/src/formats.js`. Adding a channel means adding one entry.
-- Each page has `campaign: { format, name, id, formId }`. The **server** assigns `formId` (`<CODE>-<6 chars>`, e.g. `IG-8VPZ3K`) on first publish. Format and form ID never change afterwards, so stored applications always point at the right form.
-- A page slug can be claimed once (`409` otherwise). Every page must contain exactly one application form.
+- Each page has `campaign: { format, name, id, formId }`. The editor types `formId` in the studio: the ID of the form in our application-form table (letters, numbers, `.` `-` `_`). Several pages may share one. It can be edited; the format cannot.
+- The page slug is made from the campaign name on first publish (`slugify`) and is fixed afterwards. A name whose link already exists gets `409`. Every page must contain exactly one application form.
 
 ### Connecting applications to our database (engineering)
 

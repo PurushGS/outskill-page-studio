@@ -3,14 +3,14 @@
  * Creates a new page folder from an existing template and refreshes
  * templates/index.js so the Worker bundles it.
  *
- *   npm run new-page -- <new-slug> --format youtube --campaign "Nov AI jobs" [--from <existing-slug>]
+ *   npm run new-page -- --campaign "Nov AI jobs" --format youtube --form-id <id> [--from <existing-slug>]
+ *   (the page link is made from the campaign name, as in the studio)
  *   npm run new-page -- --reindex        (only rebuild templates/index.js)
  */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SLUG_PATTERN } from '../packages/page-kit/src/core/PageValidator.js';
-import { FORMATS, findFormat, generateFormId } from '../packages/attribution/src/formats.js';
+import { FORMATS, findFormat, FORM_ID_PATTERN } from '../packages/attribution/src/formats.js';
 import { slugify } from '../packages/attribution/src/attribution.js';
 
 const TEMPLATES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'templates');
@@ -19,22 +19,22 @@ const DEFAULT_SOURCE = 'outskill-ai-resources';
 function main(args) {
   if (args.includes('--reindex')) return writeIndex();
 
-  const [slug] = args;
-  const fromIndex = args.indexOf('--from');
-  const source = fromIndex >= 0 ? args[fromIndex + 1] : DEFAULT_SOURCE;
+  const source = option(args, '--from') ?? DEFAULT_SOURCE;
   const format = findFormat(option(args, '--format'));
   const campaignName = option(args, '--campaign');
+  const formId = option(args, '--form-id');
+  const slug = slugify(campaignName);
 
-  if (!slug || !SLUG_PATTERN.test(slug)) fail('Give a slug made of lowercase letters, numbers and dashes, e.g. "ai-shorts-tamil"');
+  if (!campaignName) fail('Give --campaign "Campaign name"');
+  if (!slug) fail('The campaign name needs some English letters or numbers: the page link is made from them');
+  if (!format) fail(`Give --format, one of: ${FORMATS.map((f) => f.id).join(', ')}`);
+  if (!FORM_ID_PATTERN.test(formId ?? '')) fail('Give --form-id, the ID of the application form in our system (letters, numbers, . - _)');
   if (existsSync(join(TEMPLATES_DIR, slug))) fail(`templates/${slug} already exists`);
   if (!existsSync(join(TEMPLATES_DIR, source, 'page.json'))) fail(`No template called "${source}"`);
-  if (!format) fail(`Give --format, one of: ${FORMATS.map((f) => f.id).join(', ')}`);
-  if (!campaignName) fail('Give --campaign "Campaign name"');
 
   const page = JSON.parse(readFileSync(join(TEMPLATES_DIR, source, 'page.json'), 'utf8'));
   page.slug = slug;
-  // A new page always gets its own form ID, so its applications are never mixed with the source page's.
-  page.campaign = { format: format.id, name: campaignName, id: slugify(campaignName), formId: generateFormId(format) };
+  page.campaign = { format: format.id, name: campaignName, id: slug, formId };
   mkdirSync(join(TEMPLATES_DIR, slug));
   writeFileSync(join(TEMPLATES_DIR, slug, 'page.json'), `${JSON.stringify(page, null, 2)}\n`);
   writeIndex();

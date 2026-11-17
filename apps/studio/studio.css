@@ -104,13 +104,8 @@ a.btn[aria-disabled] { pointer-events: none; opacity: .45; }
 /* campaign panel */
 .campaign-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
 .format-badge { padding: 4px 10px; border-radius: 99px; background: #eef2ff; color: #3730a3; font-weight: 700; font-size: 12px; }
-.form-id { font-size: 12px; color: var(--muted); }
-.form-id code, .tracked-link { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.form-id code { color: var(--ink); background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
-.prefixed { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.prefixed span { padding: 0 8px; color: var(--muted); font-size: 12px; white-space: nowrap; background: #f9fafb; align-self: stretch; display: flex; align-items: center; }
-.prefixed .input { border: 0; border-radius: 0; width: auto; flex: 1; min-width: 0; }
-.prefixed .input[readonly] { color: var(--muted); }
+.page-link, .tracked-link { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.page-link { display: block; font-size: 12px; color: var(--ink); background: #f3f4f6; padding: 6px 8px; border-radius: 6px; word-break: break-all; }
 .tracked-link { display: block; padding: 8px 10px; background: #f9fafb; border: 1px dashed var(--line); border-radius: 8px; font-size: 12px; word-break: break-all; }
 
 /* Brief highlight on the field a preview click jumped to. */

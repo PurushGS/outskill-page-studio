@@ -96,10 +96,10 @@ test('validator explains problems in plain language', () => {
   page.blocks.push({ ...page.blocks[0] });
   page.blocks.push({ id: 'x', type: 'carousel' });
   page.blocks.push({ id: 'form-2', type: 'lead-form' });
-  page.campaign = { format: 'myspace', name: '', id: 'Nope', formId: 'bad' };
+  page.campaign = { format: 'myspace', name: '', id: 'Nope', formId: 'bad id' };
   page.integrations.resources = [{ label: 'Guide', url: 'javascript:alert(1)' }];
   const errors = new PageValidator(registry).validate(page);
-  for (const expected of ['Slug', 'used twice', 'Unknown block type "carousel"', 'Only one application form', 'Unknown format', 'Campaign name', 'Campaign ID', 'Form ID', 'must start with https://']) {
+  for (const expected of ['Page link', 'used twice', 'Unknown block type "carousel"', 'Only one application form', 'Unknown format', 'Campaign name', 'Campaign ID', 'Form ID', 'must start with https://']) {
     assert.ok(errors.some((e) => e.includes(expected)), `expected an error mentioning "${expected}"`);
   }
 });

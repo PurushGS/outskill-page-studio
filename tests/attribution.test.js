@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FORMATS, findFormat, generateFormId, FORM_ID_PATTERN, normalizeAttribution, resolveSource, buildTrackedLink, slugify } from '../packages/attribution/src/index.js';
+import { FORMATS, findFormat, FORM_ID_PATTERN, normalizeAttribution, resolveSource, buildTrackedLink, slugify } from '../packages/attribution/src/index.js';
 import { AttributionCollector } from '../packages/attribution/src/AttributionCollector.js';
 
-test('six formats, each with a unique form ID prefix', () => {
+test('six formats; form IDs accept whatever our application-form system uses, but no spaces or markup', () => {
   assert.equal(FORMATS.length, 6);
-  assert.equal(new Set(FORMATS.map((f) => f.code)).size, 6);
-  for (const format of FORMATS) assert.match(generateFormId(format), FORM_ID_PATTERN);
-  assert.match(generateFormId(findFormat('youtube')), /^YT-/);
+  assert.equal(findFormat('youtube').utmSource, 'youtube');
+  for (const id of ['YT-7KQ2MD', '1042', 'yt_ai_jobs.v2', 'b3f1c2d4-9a7e-4c1b-8f2d-0e6a5b4c3d21']) assert.match(id, FORM_ID_PATTERN);
+  for (const id of ['', 'has space', '<script>', '-leading-dash', 'x'.repeat(65)]) assert.doesNotMatch(id, FORM_ID_PATTERN);
 });
 
 test('source: utm_source wins, then src, then the referring channel, then direct', () => {
@@ -37,6 +37,7 @@ test('tracked links carry the format defaults, campaign and post', () => {
   const link = buildTrackedLink({ baseUrl: 'https://go.example', slug: 'ai-jobs', format: findFormat('instagram'), campaignId: 'ai-jobs-nov', content: 'Story Nov 20' });
   assert.equal(link, 'https://go.example/ai-jobs?utm_source=instagram&utm_medium=bio_link&utm_campaign=ai-jobs-nov&utm_content=story-nov-20');
   assert.equal(slugify('AI Jobs · Nov 2026!'), 'ai-jobs-nov-2026');
+  assert.doesNotMatch(slugify(`${'a'.repeat(59)} b`), /-$/, 'trimming to 60 characters never leaves a trailing dash');
 });
 
 test('collector remembers the first touch and a stable visitor id', () => {

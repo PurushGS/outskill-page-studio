@@ -18,7 +18,7 @@ export class PageValidator {
     if (!page || typeof page !== 'object') return ['Page must be an object'];
 
     if (!SLUG_PATTERN.test(page.slug || '')) {
-      errors.push('Slug must be lowercase letters, numbers and dashes, e.g. "ai-tools-hindi"');
+      errors.push('Page link must be lowercase letters, numbers and dashes, e.g. "ai-tools-hindi"');
     }
     if (!page.meta?.title) errors.push('Page needs a meta.title (shown in the browser tab and on WhatsApp previews)');
     errors.push(...this.#campaignErrors(page.campaign));
@@ -55,7 +55,8 @@ export class PageValidator {
     if (!findFormat(campaign.format)) errors.push(`Unknown format "${campaign.format}"`);
     if (!String(campaign.name || '').trim()) errors.push('Campaign name is required');
     if (!SLUG_PATTERN.test(campaign.id || '')) errors.push('Campaign ID must be lowercase letters, numbers and dashes, e.g. "nov-ai-jobs"');
-    if (!FORM_ID_PATTERN.test(campaign.formId || '')) errors.push('Form ID is missing or malformed (it is assigned automatically when a page is created)');
+    if (!campaign.formId) errors.push('Form ID is required (the ID of the application form in our system)');
+    else if (!FORM_ID_PATTERN.test(campaign.formId)) errors.push('Form ID can only use letters, numbers, dots, dashes and underscores (no spaces)');
     return errors;
   }
 
