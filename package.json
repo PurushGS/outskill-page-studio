@@ -1,0 +1,17 @@
+{
+  "name": "webpage-builder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Creative studio for YouTube landing pages: template-driven pages and a no-code editor, deployed on Cloudflare Workers.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "node --test tests/*.test.js",
+    "new-page": "node scripts/new-page.js",
+    "deploy": "wrangler deploy",
+    "setup": "node scripts/setup-cloudflare.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}

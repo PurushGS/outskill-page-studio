@@ -1,0 +1,5 @@
+# Copy to .dev.vars for `npm run dev`.
+STUDIO_TOKEN=dev-token
+# Optional, to test the engineering hook locally:
+# APPLICATIONS_ENDPOINT=http://localhost:3000/applications
+# APPLICATIONS_API_KEY=

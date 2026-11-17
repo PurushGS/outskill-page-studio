@@ -1,0 +1,19 @@
+# Only packages/ (page-kit, lead-flow), apps/studio/ and templates/ need to be public.
+.git
+.wrangler
+node_modules
+.dev.vars
+.dev.vars.*
+.env*
+apps/worker
+tests
+scripts
+wrangler.jsonc
+package.json
+package-lock.json
+*.md
+.gitignore
+.assetsignore
+.studio-token
+.studio-link
+.github

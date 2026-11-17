@@ -1,0 +1,46 @@
+/**
+ * page-kit: build landing pages from JSON with reusable, themeable blocks.
+ *
+ *   import { createDefaultRegistry, IconLibrary, PageRenderer } from './page-kit/src/index.js';
+ *   const renderer = new PageRenderer({ registry: createDefaultRegistry(), icons: new IconLibrary() });
+ *   const htmlDocument = renderer.render(pageJson);
+ */
+import { ComponentRegistry } from './core/ComponentRegistry.js';
+import { Header } from './components/Header.js';
+import { Hero } from './components/Hero.js';
+import { FeatureGrid } from './components/FeatureGrid.js';
+import { LeadForm } from './components/LeadForm.js';
+import { Faq } from './components/Faq.js';
+import { Footer } from './components/Footer.js';
+import { GuideHero } from './components/GuideHero.js';
+import { Checklist } from './components/Checklist.js';
+import { ToolStrip } from './components/ToolStrip.js';
+import { GuideLibrary } from './components/GuideLibrary.js';
+import { TopVideos } from './components/TopVideos.js';
+import { ShortsRow } from './components/ShortsRow.js';
+
+export { Component } from './core/Component.js';
+export { ComponentRegistry } from './core/ComponentRegistry.js';
+export { PageRenderer } from './core/PageRenderer.js';
+export { PageValidator, SLUG_PATTERN } from './core/PageValidator.js';
+export { html, raw, escapeHtml, safeUrl, SafeHtml } from './core/html.js';
+export { Theme, DEFAULT_THEME, FONT_CHOICES, COLOR_TOKENS } from './theme/Theme.js';
+export { IconLibrary } from './icons/IconLibrary.js';
+export { youtubeId, youtubeThumbnail } from './core/media.js';
+export { Header, Hero, FeatureGrid, LeadForm, Faq, Footer, GuideHero, Checklist, ToolStrip, GuideLibrary, TopVideos, ShortsRow };
+
+export function createDefaultRegistry() {
+  return new ComponentRegistry()
+    .register(Header)
+    .register(GuideHero)
+    .register(Hero)
+    .register(Checklist)
+    .register(ToolStrip)
+    .register(GuideLibrary)
+    .register(TopVideos)
+    .register(ShortsRow)
+    .register(FeatureGrid)
+    .register(LeadForm)
+    .register(Faq)
+    .register(Footer);
+}

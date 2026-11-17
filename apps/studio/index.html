@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/apps/studio/studio.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__brand"><span class="logo-dot"></span>Page Studio</div>
+
+    <label class="topbar__field">
+      <span class="topbar__label">Format</span>
+      <select id="format-select" class="input"></select>
+    </label>
+
+    <label class="topbar__field topbar__field--page">
+      <span class="topbar__label">Page</span>
+      <select id="page-select" class="input"></select>
+    </label>
+
+    <button type="button" id="new-page" class="btn btn--ghost" title="Start a new page in this format with the current design">+ New page</button>
+
+    <div class="topbar__devices" role="group" aria-label="Preview size">
+      <button type="button" class="seg" data-device="desktop" aria-pressed="true">Desktop</button>
+      <button type="button" class="seg" data-device="mobile" aria-pressed="false">Mobile</button>
+    </div>
+
+    <div class="topbar__actions">
+      <button type="button" id="undo" class="btn btn--ghost" disabled title="Undo (⌘Z)">Undo</button>
+      <button type="button" id="copy-link" class="btn btn--ghost" title="Copy the tracked link for this campaign">Copy link</button>
+      <a id="live-link" class="btn btn--ghost" href="#" target="_blank" rel="noopener">View live ↗</a>
+      <label class="sr-only" for="token">Studio token</label>
+      <input id="token" class="input input--token" type="password" placeholder="Studio token" autocomplete="off">
+      <button type="button" id="save" class="btn btn--primary" title="Publish (⌘S)">Published</button>
+    </div>
+  </header>
+
+  <p id="status" class="status" role="status" aria-live="polite"></p>
+
+  <main class="workspace">
+    <aside class="sidebar">
+      <nav class="tabs" role="tablist" aria-label="Editor sections">
+        <button type="button" role="tab" data-tab="content">Content</button>
+        <button type="button" role="tab" data-tab="style">Style</button>
+        <button type="button" role="tab" data-tab="campaign">Campaign</button>
+      </nav>
+      <div id="panel-host" class="sidebar__body"></div>
+    </aside>
+
+    <section class="stage" aria-label="Preview">
+      <div class="stage__frame" data-device="desktop">
+        <iframe id="preview" title="Page preview"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/apps/studio/src/main.js"></script>
+</body>
+</html>

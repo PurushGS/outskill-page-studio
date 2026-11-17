@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "outskill-page-studio",
+  "main": "apps/worker/src/index.js",
+  "compatibility_date": "2026-11-01",
+  "observability": { "enabled": true },
+
+  // Static files (studio UI, page-kit CSS/JS) are served straight from the repo.
+  // .assetsignore keeps server code, tests and secrets out of the public bundle.
+  "assets": { "directory": ".", "binding": "ASSETS" },
+
+  // Page designs saved from the studio. Created by `npm run setup`.
+  "kv_namespaces": [
+    { "binding": "PAGES", "id": "ff7f831692f34c7f971be5018ae4674e" }
+  ]
+
+  // Applications: engineering connects these to our existing database (see apps/worker/src/leads/ApplicationStore.js).
+  //   "vars": { "APPLICATIONS_ENDPOINT": "https://<our-backend>/applications" }
+  //   npx wrangler secret put APPLICATIONS_API_KEY
+  // Secret (npx wrangler secret put STUDIO_TOKEN): the password for publishing from /studio.
+}

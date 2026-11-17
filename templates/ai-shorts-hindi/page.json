@@ -1,0 +1,206 @@
+{
+  "slug": "ai-shorts-hindi",
+  "meta": {
+    "title": "AI Shorts: free prompt pack",
+    "description": "Get the prompt pack from today's Short, free on email and WhatsApp.",
+    "lang": "en"
+  },
+  "theme": {
+    "colors": {
+      "background": "#fffaf3",
+      "surface": "#ffffff",
+      "text": "#1c1917",
+      "muted": "#57534e",
+      "accent": "#ea580c",
+      "accentText": "#ffffff",
+      "border": "#e7e1d8"
+    },
+    "fonts": {
+      "heading": "Poppins",
+      "body": "Inter"
+    },
+    "radius": 18
+  },
+  "integrations": {
+    "resources": [
+      {
+        "label": "Download the prompt pack",
+        "url": "https://outskill-ai-resources.tool-od.workers.dev/#r001"
+      }
+    ],
+    "whatsappCommunityUrl": "https://chat.whatsapp.com/REPLACE_WITH_COMMUNITY_INVITE"
+  },
+  "blocks": [
+    {
+      "id": "header",
+      "type": "header",
+      "props": {
+        "brand": "AI Shorts",
+        "brandIcon": "bolt",
+        "links": [
+          {
+            "label": "What you get",
+            "href": "#features"
+          },
+          {
+            "label": "FAQ",
+            "href": "#faq"
+          }
+        ],
+        "ctaLabel": "Get the pack",
+        "ctaHref": "#join"
+      }
+    },
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "From today's Short",
+        "title": "Grab the Prompt Pack\nFrom the Video",
+        "subtitle": "All 25 prompts from the Short, plus a 5-minute setup guide. Free on email and WhatsApp.",
+        "ctaLabel": "Send it to me",
+        "ctaHref": "#join",
+        "stats": [
+          {
+            "value": "25",
+            "label": "Prompts"
+          },
+          {
+            "value": "5 min",
+            "label": "Setup"
+          },
+          {
+            "value": "Free",
+            "label": "Always"
+          },
+          {
+            "value": "Daily",
+            "label": "New Shorts"
+          }
+        ]
+      }
+    },
+    {
+      "id": "features",
+      "type": "feature-grid",
+      "props": {
+        "eyebrow": "The library",
+        "title": "What is inside the pack",
+        "subtitle": "Every guide comes from a real Outskill breakdown, with each step, prompt and tool you need.",
+        "items": [
+          {
+            "icon": "book",
+            "title": "Step-by-step guides",
+            "text": "Every workflow written out so you can follow along without pausing the video."
+          },
+          {
+            "icon": "code",
+            "title": "Copy-ready prompts",
+            "text": "The exact prompts we use, ready to paste into ChatGPT, Claude or Gemini."
+          },
+          {
+            "icon": "rocket",
+            "title": "AI tools directory",
+            "text": "760+ tools sorted by what they do and what they cost."
+          },
+          {
+            "icon": "video",
+            "title": "Top videos weekly",
+            "text": "The breakdowns everyone is watching, each with its full guide."
+          },
+          {
+            "icon": "whatsapp",
+            "title": "WhatsApp community",
+            "text": "Get new workflows the day they drop and learn with others."
+          },
+          {
+            "icon": "gift",
+            "title": "Free forever",
+            "text": "No card, no trial. Sign up once and keep everything."
+          }
+        ]
+      }
+    },
+    {
+      "id": "join-form",
+      "type": "lead-form",
+      "props": {
+        "eyebrow": "Free forever",
+        "title": "Get the pack\nin 30 seconds",
+        "subtitle": "One sign-up unlocks every workflow, prompt and tool from Outskill's videos.",
+        "perks": [
+          {
+            "icon": "mail",
+            "text": "Material sent to your email instantly"
+          },
+          {
+            "icon": "whatsapp",
+            "text": "Join the WhatsApp community"
+          },
+          {
+            "icon": "calendar",
+            "text": "New guides every week"
+          }
+        ],
+        "formTitle": "Unlock the Library",
+        "submitLabel": "Get Free Access",
+        "roleOptions": "Student\nWorking professional\nFounder or business owner\nFreelancer or consultant\nContent creator\nSomething else",
+        "whatsappConsent": "Send the material and updates to my WhatsApp",
+        "privacyNote": "No spam. Unsubscribe in one click.",
+        "successTitle": "You're in!",
+        "successText": "We've sent the material to your email and WhatsApp. Join the community to get new workflows first.",
+        "whatsappLabel": "Join the WhatsApp community"
+      }
+    },
+    {
+      "id": "faq",
+      "type": "faq",
+      "props": {
+        "eyebrow": "Common questions",
+        "title": "Everything you're wondering about",
+        "items": [
+          {
+            "question": "Is the library really free?",
+            "answer": "Yes. Every guide, prompt and template is free. You sign up once so we can send you new workflows as they go live."
+          },
+          {
+            "question": "What do I get after signing up?",
+            "answer": "Instant access to every workflow from Outskill's videos, plus the directory of AI tools sorted by what they do and what they cost."
+          },
+          {
+            "question": "How often are new workflows added?",
+            "answer": "Every week. Each new Outskill breakdown on YouTube gets its own guide."
+          },
+          {
+            "question": "Do I need to know how to code?",
+            "answer": "No. Most guides need no code at all, and the ones that do walk you through every command."
+          }
+        ]
+      }
+    },
+    {
+      "id": "footer",
+      "type": "footer",
+      "props": {
+        "brand": "AI Shorts",
+        "note": "© 2026 Outskill. All rights reserved.",
+        "links": [
+          {
+            "label": "YouTube",
+            "href": "https://www.youtube.com/channel/UCNssyoLJiA2oB5xM7XjxmJA"
+          },
+          {
+            "label": "outskill.com",
+            "href": "https://www.outskill.com/"
+          }
+        ]
+      }
+    }
+  ],
+  "campaign": {
+    "format": "instagram",
+    "name": "Hindi reels prompt pack",
+    "id": "hindi-reels-prompt-pack",
+    "formId": "IG-8VPZ3K"
+  }
+}
