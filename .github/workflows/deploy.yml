@@ -25,4 +25,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # The action's built-in default is Wrangler 3, which can't read wrangler.jsonc.
+          wranglerVersion: '4.164.0'
           command: deploy
