@@ -32,6 +32,7 @@ export class LeadService {
   async submit(slug, submission, requestInfo) {
     const page = await this.pages.get(slug);
     const { campaign } = page;
+    if (page.unpublished) throw new HttpError(410, 'This page is no longer accepting applications.');
     if (!campaign?.formId) throw new HttpError(409, 'This page is not set up for applications yet. Publish it from the studio first.');
     if (submission.formId !== campaign.formId) {
       // The page was republished with a different form since this visitor loaded it.

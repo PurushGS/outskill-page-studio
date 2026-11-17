@@ -34,6 +34,7 @@ export function createApp(env) {
     .post('/api/pages', pageController.create)
     .get('/api/pages/:slug', pageController.get)
     .put('/api/pages/:slug', pageController.save)
+    .post('/api/pages/:slug/unpublish', pageController.unpublish)
     .get('/api/templates/:slug', pageController.template)
     .post('/api/leads', leadController.submit)
     .get('/', (request) => Response.redirect(new URL('/studio', request.url), 302))

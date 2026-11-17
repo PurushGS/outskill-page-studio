@@ -37,6 +37,8 @@ You never deploy anything. **Publish** in the studio is all it takes to put a pa
 6. Press **Publish** (⌘S). The green bar gives you the **tracked link** for that format. Paste it in the post, video description or bio.
 7. **One link per post:** on the Campaign tab, under "Tracked link to share", type a short name for the post (e.g. `jobs-video-1`, `story-nov-20`) and copy that link. Each application then records which post it came from.
 
+**Campaign over?** Press **Unpublish**. Visitors see "This page is no longer available" and the form stops taking applications. The page stays in the studio, marked *(unpublished)*. **Publish again** brings it back at the same link.
+
 Undo (button or ⌘Z) goes back one change at a time. If Publish asks for a password, open your studio link once more.
 
 ## For engineers

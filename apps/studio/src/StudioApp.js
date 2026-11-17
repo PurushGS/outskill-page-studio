@@ -30,6 +30,8 @@ export class StudioApp {
     this.api = api;
     this.pages = [];
     this.format = '';
+    /** The open page was taken off the web; Publish brings it back. */
+    this.isUnpublished = false;
     this.preview = new PreviewFrame(root.querySelector('#preview'), renderer, {
       onBlockClick: (id, fieldPath) => this.#selectBlock(id, fieldPath),
       onKeyDown: (event) => this.#handleShortcut(event),
@@ -45,6 +47,7 @@ export class StudioApp {
       newPage: root.querySelector('#new-page'),
       status: root.querySelector('#status'),
       save: root.querySelector('#save'),
+      unpublish: root.querySelector('#unpublish'),
       undo: root.querySelector('#undo'),
       liveLink: root.querySelector('#live-link'),
       copyLink: root.querySelector('#copy-link'),
@@ -96,7 +99,7 @@ export class StudioApp {
 
   #fillPageSelect(inFormat, selected) {
     this.ui.pageSelect.replaceChildren(...inFormat.map((p) =>
-      el('option', { value: p.slug, selected: p.slug === selected }, `${p.campaignName || p.slug} · /${p.slug}`),
+      el('option', { value: p.slug, selected: p.slug === selected }, `${p.campaignName || p.slug} · /${p.slug}${p.unpublished ? ' (unpublished)' : ''}`),
     ));
     if (!inFormat.length) this.ui.pageSelect.append(el('option', { value: '' }, `No ${findFormat(this.format).label} pages yet`));
   }
@@ -107,8 +110,10 @@ export class StudioApp {
       return;
     }
     this.#setStatus('Loading…');
-    this.store.load(await this.api.getPage(slug));
-    this.#setStatus('');
+    const page = await this.api.getPage(slug);
+    this.isUnpublished = Boolean(page.unpublished);
+    this.store.load(page);
+    this.#setStatus(this.isUnpublished ? 'This page is unpublished: visitors see "no longer available". Press Publish again to bring it back.' : '');
   }
 
   /**
@@ -122,6 +127,8 @@ export class StudioApp {
     draft.campaign = { format: this.format, name: '', id: '', formId: '' };
     delete draft.createdAt;
     delete draft.updatedAt;
+    delete draft.unpublished;
+    this.isUnpublished = false;
     this.store.load(draft, { draft: true });
     this.ui.pageSelect.prepend(el('option', { value: '', selected: true }, '✎ New page (not published yet)'));
     this.root.querySelector('[data-tab="campaign"]').click();
@@ -131,22 +138,26 @@ export class StudioApp {
   // ---------- publishing ----------
 
   async #save() {
-    if (!this.store.isDirty) return;
+    if (!this.store.isDirty && !this.isUnpublished) return;
     this.api.token = this.ui.token.value.trim() || this.api.token;
     this.#setStatus('Publishing…');
     this.ui.save.disabled = true;
     try {
       const wasDraft = this.store.isDraft;
+      const wasUnpublished = this.isUnpublished;
       const { page } = wasDraft ? await this.api.createPage(this.store.page) : await this.api.savePage(this.store.page);
+      this.isUnpublished = false;
       // A new page comes back with its final page link, so load it; an update keeps its undo history.
       if (wasDraft) this.store.load(page);
       else this.store.markSaved();
-      if (wasDraft) {
+      this.#updatePublishControls();
+      if (wasDraft || wasUnpublished) {
         await this.#refreshPages();
         this.#fillPageSelect(this.pages.filter((p) => p.format === this.format), page.slug);
       }
       const link = buildTrackedLink({ baseUrl: location.origin, slug: page.slug, format: findFormat(page.campaign.format), campaignId: page.campaign.id });
-      this.#setStatus(`${wasDraft ? 'New page is live' : 'Published'}! Tracked link for your ${findFormat(page.campaign.format).label} post:`, 'ok', link);
+      const done = wasDraft ? 'New page is live' : wasUnpublished ? 'Page is live again' : 'Published';
+      this.#setStatus(`${done}! Tracked link for your ${findFormat(page.campaign.format).label} post:`, 'ok', link);
     } catch (err) {
       if (err.status === 401) this.ui.token.hidden = false;
       this.#setStatus(this.#describeError(err), 'error');
@@ -155,21 +166,47 @@ export class StudioApp {
     }
   }
 
+  /** Keeps the page and its edits in the studio; only the public page and its form go offline. */
+  async #unpublish() {
+    const { slug } = this.store.page;
+    const ok = window.confirm(`Take /${slug} off the web?\n\nVisitors will see "This page is no longer available" and the form stops taking applications. The page stays here in the studio: press Publish again any time to bring it back at the same link.`);
+    if (!ok) return;
+    this.ui.unpublish.disabled = true;
+    try {
+      await this.api.unpublishPage(slug);
+      this.isUnpublished = true;
+      this.#updatePublishControls();
+      await this.#refreshPages();
+      this.#fillPageSelect(this.pages.filter((p) => p.format === this.format), slug);
+      this.#setStatus(`Unpublished: /${slug} is off the web (it can take up to a minute everywhere). Press Publish again to bring it back.`, 'ok');
+    } catch (err) {
+      if (err.status === 401) this.ui.token.hidden = false;
+      this.#setStatus(this.#describeError(err).replace('Publishing', 'Unpublishing'), 'error');
+    } finally {
+      this.ui.unpublish.disabled = false;
+    }
+  }
+
+  #updatePublishControls() {
+    const { isDraft, isDirty } = this.store;
+    this.ui.save.textContent = isDraft ? 'Publish new page' : this.isUnpublished ? 'Publish again' : isDirty ? 'Publish changes' : 'Published';
+    this.ui.save.classList.toggle('is-dirty', isDirty || this.isUnpublished);
+    this.ui.unpublish.hidden = isDraft || this.isUnpublished;
+  }
+
   // ---------- wiring ----------
 
   #bindStore() {
     const rerender = debounce(() => this.preview.render(this.#previewPage()), 120);
     this.store.addEventListener('change', rerender);
     this.store.addEventListener('change', () => { this.ui.undo.disabled = !this.store.canUndo; });
-    this.store.addEventListener('dirty', () => {
-      this.ui.save.textContent = this.store.isDraft ? 'Publish new page' : this.store.isDirty ? 'Publish changes' : 'Published';
-      this.ui.save.classList.toggle('is-dirty', this.store.isDirty);
-    });
+    this.store.addEventListener('dirty', () => this.#updatePublishControls());
     this.store.addEventListener('structure', () => {
       const { slug } = this.store.page;
       this.ui.liveLink.href = `/${slug}`;
       this.ui.liveLink.toggleAttribute('aria-disabled', this.store.isDraft);
       this.ui.copyLink.disabled = this.store.isDraft;
+      this.#updatePublishControls();
     });
   }
 
@@ -184,6 +221,7 @@ export class StudioApp {
     this.ui.pageSelect.addEventListener('change', (e) => this.#openPage(e.target.value));
     this.ui.newPage.addEventListener('click', () => this.#startDraft(this.store.page));
     this.ui.save.addEventListener('click', () => this.#save());
+    this.ui.unpublish.addEventListener('click', () => this.#unpublish());
     this.ui.undo.addEventListener('click', () => this.store.undo());
     this.ui.copyLink.addEventListener('click', () => this.#copyTrackedLink());
     this.ui.token.addEventListener('change', () => { this.api.token = this.ui.token.value.trim(); });

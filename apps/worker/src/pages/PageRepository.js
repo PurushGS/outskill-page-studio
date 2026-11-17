@@ -45,7 +45,7 @@ export class PageRepository {
     await this.kv.put(this.#key(page.slug), JSON.stringify(page), { metadata: summarize(page) });
   }
 
-  /** @returns {Promise<Array<{ slug, source: 'studio'|'template', format, campaignName, campaignId, formId }>>} */
+  /** @returns {Promise<Array<{ slug, source: 'studio'|'template', format, campaignName, campaignId, formId, unpublished }>>} */
   async list() {
     const all = new Map(Object.values(this.bundled).map((page) => [page.slug, { ...summarize(page), source: 'template' }]));
     let cursor;
@@ -72,5 +72,6 @@ function summarize(page) {
     campaignName: page.campaign?.name ?? '',
     campaignId: page.campaign?.id ?? '',
     formId: page.campaign?.formId ?? '',
+    unpublished: Boolean(page.unpublished),
   };
 }

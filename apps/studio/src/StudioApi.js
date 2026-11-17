@@ -53,6 +53,11 @@ export class StudioApi {
     return this.#request('PUT', `/api/pages/${page.slug}`, page);
   }
 
+  /** Takes the page off the web; it stays in the studio and Publish brings it back. */
+  unpublishPage(slug) {
+    return this.#request('POST', `/api/pages/${slug}/unpublish`);
+  }
+
   async #request(method, path, body) {
     const response = await fetch(path, {
       method,

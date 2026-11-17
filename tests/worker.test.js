@@ -104,6 +104,35 @@ test('saving keeps the format and link fixed, while the campaign name and form I
   assert.equal(saved.page.campaign.formId, 'FB-2');
 });
 
+test('unpublish takes a page and its form offline; Publish brings it back unchanged at the same link', async () => {
+  const { request, received } = createTestApp();
+  const { body } = await createPage(request, { format: 'x', name: 'X thread Dec', formId: 'X-77' });
+  const page = body.page;
+
+  assert.equal((await request('POST', `/api/pages/${page.slug}/unpublish`)).status, 401, 'needs the studio token');
+  const res = await request('POST', `/api/pages/${page.slug}/unpublish`, { headers: auth });
+  assert.equal(res.status, 200);
+  assert.equal((await request('POST', '/api/pages/no-such-page/unpublish', { headers: auth })).status, 404);
+
+  const offline = await request('GET', `/${page.slug}`);
+  assert.equal(offline.status, 404);
+  assert.match(await offline.text(), /no longer available/);
+  assert.equal(offline.headers.get('Cache-Control'), 'no-store');
+  assert.equal((await request('POST', '/api/leads', { body: submission(page) })).status, 410, 'no applications while unpublished');
+  assert.equal(received.length, 0);
+
+  const { pages } = await (await request('GET', '/api/pages?format=x')).json();
+  assert.equal(pages.find((p) => p.slug === page.slug).unpublished, true, 'the studio list shows it as unpublished');
+  const kept = await (await request('GET', `/api/pages/${page.slug}`)).json();
+  assert.equal(kept.campaign.formId, 'X-77', 'the page itself is kept');
+
+  // Publish again sends the page as the studio holds it, flag included; the server puts it back live.
+  const republished = await request('PUT', `/api/pages/${page.slug}`, { body: kept, headers: auth });
+  assert.equal((await republished.json()).page.unpublished, undefined);
+  assert.equal((await request('GET', `/${page.slug}`)).status, 200);
+  assert.equal((await request('POST', '/api/leads', { body: submission(page) })).status, 201);
+});
+
 test('end to end: create page → apply → one complete Application reaches the engineering hook', async () => {
   const { request, received } = createTestApp();
   const { body } = await createPage(request, { format: 'instagram', name: 'AI Jobs · IG Nov', id: 'ai-jobs-ig-nov', formId: 'IG-1042' });
