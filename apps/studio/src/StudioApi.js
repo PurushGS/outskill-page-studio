@@ -40,6 +40,11 @@ export class StudioApi {
     return this.#request('GET', `/api/pages/${slug}`);
   }
 
+  /** The form's questions, as the page will show them. */
+  getQuestionFlow(formId) {
+    return this.#request('GET', `/api/forms/${formId}/questionflow`);
+  }
+
   getTemplate(slug) {
     return this.#request('GET', `/api/templates/${slug}`);
   }

@@ -1,5 +1,5 @@
 import { Theme } from '../theme/Theme.js';
-import { findFormat, FORM_ID_PATTERN } from '../../../attribution/src/formats.js';
+import { findFormat, FORM_URL_EXAMPLE, parseFormUrl } from '../../../attribution/src/formats.js';
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -50,13 +50,14 @@ export class PageValidator {
   }
 
   #campaignErrors(campaign) {
-    if (!campaign) return ['Page needs campaign details (format, campaign name, campaign ID)'];
+    if (!campaign) return ['Page needs campaign details (format, campaign name, form URL)'];
     const errors = [];
     if (!findFormat(campaign.format)) errors.push(`Unknown format "${campaign.format}"`);
     if (!String(campaign.name || '').trim()) errors.push('Campaign name is required');
     if (!SLUG_PATTERN.test(campaign.id || '')) errors.push('Campaign ID must be lowercase letters, numbers and dashes, e.g. "nov-ai-jobs"');
-    if (!campaign.formId) errors.push('Form ID is required (the ID of the application form in our system)');
-    else if (!FORM_ID_PATTERN.test(campaign.formId)) errors.push('Form ID can only use letters, numbers, dots, dashes and underscores (no spaces)');
+    if (campaign.redirectUrl && !/^https?:\/\/\S+$/i.test(campaign.redirectUrl)) errors.push('Redirect URL must start with https:// (or leave it empty)');
+    if (!campaign.formUrl) errors.push('Form URL is required (the link of the application form)');
+    else if (!parseFormUrl(campaign.formUrl)) errors.push(`Form URL must look like ${FORM_URL_EXAMPLE} (program ID / form ID / campaign ID; the campaign ID is optional)`);
     return errors;
   }
 

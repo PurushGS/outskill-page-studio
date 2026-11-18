@@ -14,8 +14,10 @@
     { "binding": "PAGES", "id": "ff7f831692f34c7f971be5018ae4674e" }
   ]
 
-  // Applications: engineering connects these to our existing database (see apps/worker/src/leads/ApplicationStore.js).
-  //   "vars": { "APPLICATIONS_ENDPOINT": "https://<our-backend>/applications" }
-  //   npx wrangler secret put APPLICATIONS_API_KEY
+  // Applications go to the application backend (apps/worker/src/leads/FormsApiClient.js).
+  // Both come from the environment only (no defaults in the code):
+  //   FORM_API_URL     the backend address: a Worker variable (dashboard, or "vars" below) or `npx wrangler secret put FORM_API_URL`
+  //   FORMS_API_TOKEN  `npx wrangler secret put FORMS_API_TOKEN`
+  //   locally, both live in .dev.vars
   // Secret (npx wrangler secret put STUDIO_TOKEN): the password for publishing from /studio.
 }

@@ -1,22 +1,23 @@
 # Page Studio
 
-Campaign landing pages for every channel: YouTube, Instagram, X, LinkedIn, Facebook and WhatsApp. Ashutosh picks a format, edits a page in **/studio** without engineering help, and publishes. Every page carries an inline application form, saved under the form ID Ashutosh enters. Each submission is turned into one complete **Application** record (applicant + campaign name + form ID + attribution) and handed to an engineering hook that saves it into our existing application-form table.
+Campaign landing pages for every channel: YouTube, Instagram, X, LinkedIn, Facebook and WhatsApp. Ashutosh picks a format, edits a page in **/studio** without engineering help, and publishes. Every page carries an inline application form. He pastes the application **Form URL** (`https://applications.growthschool.io/<programId>/<formId>/<campaignId>`) once, and the page then shows that form's own questions and sends every application to that form and campaign in our application backend, the same way the LP Management System does.
 
 ```
 Post / video / bio link → https://<site>/<slug>?utm_source=…&utm_campaign=…&utm_content=<post>
                             ▼
-                 Inline application form  (form ID e.g. YT-7KQ2MD)
-                            │  POST /api/leads
+   Page with inline form.  Form URL …/5122/24542/19240  =  program 5122 · form 24542 · campaign 19240
+                            │  GET /api/forms/24542/questionflow   → the form's questions are shown
                             ▼
-      Application record: applicant + form ID + format + campaign name/ID
-                          + source, utm_*, click ID, referrer, first touch, device, country
-                            ▼
-      ApplicationStore  ← ENGINEERING HOOK → our existing DB / application-form table
+   Name + email + phone valid  →  POST /api/leads            →  lead created (form 24542, campaign 19240, utm_*)
+   each question answered      →  POST /api/leads/response   →  answer saved
+   Submit                      →  last answer (fully submitted) + POST /api/leads/complete
                             ▼
       Success screen: resource links + WhatsApp community
 ```
 
-> **Status:** the hook is not connected yet. Pages work, but applications are **not saved** until engineering connects it (see "Connecting applications to our database").
+The Worker calls the application backend (`FORM_API_URL`) for all of this (`apps/worker/src/leads/FormsApiClient.js`). The browser never talks to the backend directly and never chooses the form.
+
+> **Setup needed:** the Worker needs the backend address and token from its environment: `FORM_API_URL` (a Worker variable) and `FORMS_API_TOKEN` (`npx wrangler secret put FORMS_API_TOKEN`); locally both go in `.dev.vars`. Without them, pages work but the form's questions and applications are refused with "not connected".
 
 ## For Ashutosh: making and changing pages
 
@@ -29,8 +30,9 @@ You never deploy anything. **Publish** in the studio is all it takes to put a pa
    - **+ New page** starts a new page in the selected format with the design you're looking at.
 3. On the **Campaign** tab of a new page:
    - Type the **campaign name**. The page link is made from it (`AI Jobs · Nov 2026` → `/ai-jobs-nov-2026`) and cannot change after publishing. Renaming the campaign later keeps the same link.
-   - Type the **Form ID**: the ID of the application form in our system. It's required, and you can change it later.
-   - The campaign ID fills itself in (you can change it).
+   - Paste the **Form URL**: `https://applications.growthschool.io/<program>/<form>/<campaign>`. It's required, and you can change it later. Under the box you'll see the program, form and campaign it read from the link, and the form's questions appear in the preview.
+   - The campaign ID is the page link, filled in automatically.
+   - **Redirect URL** (optional, under Page link): after someone applies they see a thank-you and are sent to this link after 3 seconds, with a Continue button to go at once. Leave it empty to show the resource links and WhatsApp button instead.
    - Add the **resource links** people get after applying and the **WhatsApp community link**.
 4. **Content**: click any text or icon in the preview to edit it. Move sections with ↑ ↓, remove with ✕, add with **+ Add section**. The application form has a 🔒: it stays on every page.
 5. **Style**: palettes, colours, fonts, corner roundness. Check **Mobile** before publishing.
@@ -64,32 +66,39 @@ packages/                      reusable libraries: no build step, no dependencie
 apps/
   worker/                      Cloudflare Worker
     pages/                     PageRepository (KV + bundled templates), PageService (create/update rules)
-    leads/                     LeadService, ApplicationStore (engineering hook) + Http / NotConnected stores
+    leads/                     LeadService (create lead → answers → complete) + FormsApiClient (the backend)
     controllers/, http/        HTTP layer: routing, auth, request context (device, geo)
   studio/                      the editor: PageStore (state, undo, drafts), panels, live preview
 templates/<slug>/page.json     bundled starter pages (outskill-ai-resources is the base template)
 scripts/                       new-page.js, setup-cloudflare.js
-tests/                         libraries, every block, Worker end-to-end (create page → apply → Application at the hook)
+tests/                         libraries, every block, Worker end-to-end (create page → questions → lead → answers → complete, against a fake backend)
 ```
 
-### Formats, form IDs and campaigns
+### Formats, form URLs and campaigns
 
 - Formats live in `packages/attribution/src/formats.js`. Adding a channel means adding one entry.
-- Each page has `campaign: { format, name, id, formId }`. The editor types `formId` in the studio: the ID of the form in our application-form table (letters, numbers, `.` `-` `_`). Several pages may share one. It can be edited; the format cannot.
+- Each page has `campaign: { format, name, id, formUrl, redirectUrl? }`. The editor pastes `formUrl` in the studio. Any host works (`applications.growthschool.io`, `applications.outskill.com`). The path is numbers only: **program ID / form ID / campaign ID**, where the campaign ID is optional, so `…/1426/17216` is valid (`parseFormUrl` in `formats.js`). Without a campaign ID, no `campaign_id` is sent to the backend. `id` is set by the server to the page link (it becomes `utm_campaign` in tracked links) and is not edited. Several pages may share one form URL. It can be edited; the format cannot.
 - The page slug is made from the campaign name on first publish (`slugify`) and is fixed afterwards. A name whose link already exists gets `409`. Every page must contain exactly one application form.
 
-### Connecting applications to our database (engineering)
+### How applications reach the backend (engineering)
 
-Everything is in `apps/worker/src/leads/ApplicationStore.js`: the full **Application** shape (form ID, format, campaign name/ID, applicant, attribution, first touch, device, geo) and the rules for `save()`. There are two ways to connect:
+The same calls as the LP Management System, made by the Worker with the `FORMS_API_TOKEN` secret (`FORM_API_URL` is the backend address; both come from the environment only, with no defaults in the code):
 
-- **A. Endpoint, no code here.** Add a route on our backend that inserts into the application-form table. Then set `APPLICATIONS_ENDPOINT` (a `vars` entry in `wrangler.jsonc`) and `npx wrangler secret put APPLICATIONS_API_KEY`, and deploy. `HttpApplicationStore` POSTs each Application as JSON with `Authorization: Bearer …` and `Idempotency-Key: <applicationId>`. Any 2xx counts as saved.
-- **B. Direct.** Write a class with the same `save(application)` method (e.g. via Cloudflare Hyperdrive to our Postgres/MySQL) and return it from `createApplicationStore()` in `apps/worker/src/app.js`.
+| Step | Backend call | Sent |
+|---|---|---|
+| Questions | `GET /forms/:formId/questionflow` | none (read-only, public) |
+| Lead | `POST /leads?formId=` | `name`, `email`, `phone` (E.164), `leadUUID`, `campaign_id`, `utm_source/medium/content/term` and `utm_campaign` (= the page slug, plus `/<link's own>` if it has one). Returns the lead's token |
+| Answers | `POST /leads/form/responses?formId=&leadUUID=` | `questionId`, `responses`, `optionIds`, …, `IsFullySubmitted`; header `gs-forms-user-auth-token` |
+| Complete | `PATCH /leads/application/completed?leadUUID=` | none. Returns no redirect URL |
 
-If `save()` throws, the visitor sees "please try again", so nothing is lost silently. Until it's connected, `NotConnectedApplicationStore` logs a warning (form ID and campaign only, never personal data) and saves nothing. Dedupe on `applicant.email + form.id` in our DB if repeat applications matter.
+- The lead is created in the background as soon as name, email and phone are valid, and answers are sent one by one as they are given, so someone who leaves half way is still captured. The answer that completes the form (the one after which every shown question is answered) is held back, and Submit sends it with `IsFullySubmitted: true`, then completes the application. This is the same sequence as the LP Management System.
+- The form ID always comes from the saved page's Form URL, never from the browser. A visitor on a stale page (Form URL changed since they loaded it) is asked to refresh.
+- If the backend fails or `FORMS_API_TOKEN` is missing, the visitor sees "please try again" / "not connected", so nothing is lost silently.
+- Not sent: the "send updates to my WhatsApp" tick box, device, geo, first touch and click IDs. The backend has no fields for them (as far as the LP Management System's calls show).
 
-`attribution.source` = utm_source → `src` → the referring site's channel (youtube.com → youtube, t.co → x, …) → the referring domain → `direct`.
+`utm_source/medium/content/term` are the visit's own values (the tracked link sets them); a visitor with none sends none. `utm_campaign` always starts with the page's slug (the page link). If the visitor's link has its own `utm_campaign`, it follows after a slash: `ai-jobs-nov-2026/example`. A link whose value is the slug itself (our tracked links) sends the slug once.
 
-Spam: a hidden honeypot field. Bots that fill it get a normal-looking response, but nothing is sent to the hook.
+Spam: a hidden honeypot field. Bots that fill it get a normal-looking response, but nothing is created in the backend.
 
 ### Design rules
 
@@ -115,7 +124,7 @@ Register it in `createDefaultRegistry()` and add its CSS. It then shows up under
 
 ### Adding analytics (WebEngage) later
 
-The page already calls a `Tracker` at the right moments: page viewed, form submitted (with the form ID), resource opened, WhatsApp clicked. Implement `class WebEngageTracker extends Tracker` and return it from `createTracker()` in `packages/lead-flow/src/browser.js`. Nothing else changes. For server-side events, add the call in `LeadService.submit()`.
+The page already calls a `Tracker` at the right moments: page viewed, form submitted (with the form URL), resource opened, WhatsApp clicked. Implement `class WebEngageTracker extends Tracker` and return it from `createTracker()` in `packages/lead-flow/src/browser.js`. Nothing else changes. For server-side events, add the call in `LeadService.submit()`.
 
 ## Deploy (Cloudflare Workers)
 

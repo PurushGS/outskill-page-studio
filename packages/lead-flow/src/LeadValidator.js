@@ -23,7 +23,6 @@ export class LeadValidator {
     if (name.length < 2) errors.name = 'Please enter your name';
     if (!EMAIL.test(email)) errors.email = 'Please enter a valid email address';
     if (!country.pattern.test(nationalNumber)) errors.phone = `Please enter a valid ${country.name} WhatsApp number`;
-    if (input.requireRole && !clean(input.role)) errors.role = 'Please pick one';
 
     if (Object.keys(errors).length) return { valid: false, errors, lead: null };
 
@@ -35,7 +34,6 @@ export class LeadValidator {
         email,
         country: country.code,
         phone: `${country.dial}${nationalNumber}`,
-        role: clean(input.role),
         whatsappOptIn: input.whatsappOptIn === true || input.whatsappOptIn === 'on',
       },
     };

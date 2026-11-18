@@ -1,5 +1,5 @@
-# Copy to .dev.vars for `npm run dev`.
+# Copy to .dev.vars for `npm run dev` (wrangler reads it as the local env file).
 STUDIO_TOKEN=dev-token
-# Optional, to test the engineering hook locally:
-# APPLICATIONS_ENDPOINT=http://localhost:3000/applications
-# APPLICATIONS_API_KEY=
+# The application backend, same values as the LP Management System's FORM_API_URL / FORMS_API_TOKEN.
+FORM_API_URL=
+FORMS_API_TOKEN=

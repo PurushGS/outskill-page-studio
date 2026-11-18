@@ -1,13 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FORMATS, findFormat, FORM_ID_PATTERN, normalizeAttribution, resolveSource, buildTrackedLink, slugify } from '../packages/attribution/src/index.js';
+import { FORMATS, findFormat, parseFormUrl, normalizeAttribution, resolveSource, buildTrackedLink, slugify } from '../packages/attribution/src/index.js';
 import { AttributionCollector } from '../packages/attribution/src/AttributionCollector.js';
 
-test('six formats; form IDs accept whatever our application-form system uses, but no spaces or markup', () => {
+test('six formats', () => {
   assert.equal(FORMATS.length, 6);
   assert.equal(findFormat('youtube').utmSource, 'youtube');
-  for (const id of ['YT-7KQ2MD', '1042', 'yt_ai_jobs.v2', 'b3f1c2d4-9a7e-4c1b-8f2d-0e6a5b4c3d21']) assert.match(id, FORM_ID_PATTERN);
-  for (const id of ['', 'has space', '<script>', '-leading-dash', 'x'.repeat(65)]) assert.doesNotMatch(id, FORM_ID_PATTERN);
+});
+
+test('a form URL is program ID / form ID / optional campaign ID, on any host', () => {
+  assert.deepEqual(parseFormUrl('https://applications.growthschool.io/5122/24542/19240'), { programId: 5122, formId: 24542, campaignId: 19240 });
+  assert.deepEqual(parseFormUrl('https://applications.outskill.com/1426/17216'), { programId: 1426, formId: 17216, campaignId: null }, 'the campaign ID is optional');
+  assert.deepEqual(parseFormUrl('https://applications.growthschool.io/1426/17216'), { programId: 1426, formId: 17216, campaignId: null });
+  assert.deepEqual(parseFormUrl(' https://applications.growthschool.io/1/2/3/ '), { programId: 1, formId: 2, campaignId: 3 }, 'trailing slash and spaces are fine');
+  for (const bad of ['', 'nope', '5122/24542/19240', 'javascript:alert(1)', 'https://x.io/1', 'https://x.io/1/2/3/4', 'https://x.io/a/2/3', 'https://x.io/0/2/3', 'https://x.io/1/-2/3', 'https://x.io/1/2/3x']) {
+    assert.equal(parseFormUrl(bad), null, `"${bad}" should not parse`);
+  }
 });
 
 test('source: utm_source wins, then src, then the referring channel, then direct', () => {

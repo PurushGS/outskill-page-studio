@@ -6,8 +6,7 @@ import { StudioAuth } from './http/StudioAuth.js';
 import { PageRepository } from './pages/PageRepository.js';
 import { PageService } from './pages/PageService.js';
 import { LeadService } from './leads/LeadService.js';
-import { HttpApplicationStore } from './leads/HttpApplicationStore.js';
-import { NotConnectedApplicationStore } from './leads/NotConnectedApplicationStore.js';
+import { FormsApiClient } from './leads/FormsApiClient.js';
 import { PageController } from './controllers/PageController.js';
 import { LeadController } from './controllers/LeadController.js';
 
@@ -26,7 +25,8 @@ export function createApp(env) {
     renderer: new PageRenderer({ registry, icons: new IconLibrary() }),
     auth,
   });
-  const leadController = new LeadController({ leadService: new LeadService({ store: createApplicationStore(env), pages }) });
+  const forms = new FormsApiClient({ baseUrl: env.FORM_API_URL, token: env.FORMS_API_TOKEN });
+  const leadController = new LeadController({ leadService: new LeadService({ api: forms, pages }) });
 
   const router = new Router()
     .get('/studio', (request) => env.ASSETS.fetch(new URL('/apps/studio/', request.url)))
@@ -36,7 +36,10 @@ export function createApp(env) {
     .put('/api/pages/:slug', pageController.save)
     .post('/api/pages/:slug/unpublish', pageController.unpublish)
     .get('/api/templates/:slug', pageController.template)
-    .post('/api/leads', leadController.submit)
+    .get('/api/forms/:formId/questionflow', leadController.questionFlow)
+    .post('/api/leads', leadController.create)
+    .post('/api/leads/response', leadController.saveResponse)
+    .post('/api/leads/complete', leadController.complete)
     .get('/', (request) => Response.redirect(new URL('/studio', request.url), 302))
     .get('/:slug', pageController.renderPage);
 
@@ -54,15 +57,4 @@ export function createApp(env) {
       }
     },
   };
-}
-
-/**
- * ENGINEERING HOOK: where applications are saved. See leads/ApplicationStore.js
- * for the record shape and the two ways to connect our existing database.
- */
-export function createApplicationStore(env) {
-  if (env.APPLICATIONS_ENDPOINT) {
-    return new HttpApplicationStore({ endpoint: env.APPLICATIONS_ENDPOINT, apiKey: env.APPLICATIONS_API_KEY });
-  }
-  return new NotConnectedApplicationStore();
 }

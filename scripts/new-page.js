@@ -3,14 +3,14 @@
  * Creates a new page folder from an existing template and refreshes
  * templates/index.js so the Worker bundles it.
  *
- *   npm run new-page -- --campaign "Nov AI jobs" --format youtube --form-id <id> [--from <existing-slug>]
+ *   npm run new-page -- --campaign "Nov AI jobs" --format youtube --form-url <https://…> [--from <existing-slug>]
  *   (the page link is made from the campaign name, as in the studio)
  *   npm run new-page -- --reindex        (only rebuild templates/index.js)
  */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FORMATS, findFormat, FORM_ID_PATTERN } from '../packages/attribution/src/formats.js';
+import { FORMATS, findFormat, parseFormUrl } from '../packages/attribution/src/formats.js';
 import { slugify } from '../packages/attribution/src/attribution.js';
 
 const TEMPLATES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'templates');
@@ -22,19 +22,19 @@ function main(args) {
   const source = option(args, '--from') ?? DEFAULT_SOURCE;
   const format = findFormat(option(args, '--format'));
   const campaignName = option(args, '--campaign');
-  const formId = option(args, '--form-id');
+  const formUrl = option(args, '--form-url');
   const slug = slugify(campaignName);
 
   if (!campaignName) fail('Give --campaign "Campaign name"');
   if (!slug) fail('The campaign name needs some English letters or numbers: the page link is made from them');
   if (!format) fail(`Give --format, one of: ${FORMATS.map((f) => f.id).join(', ')}`);
-  if (!FORM_ID_PATTERN.test(formId ?? '')) fail('Give --form-id, the ID of the application form in our system (letters, numbers, . - _)');
+  if (!parseFormUrl(formUrl)) fail('Give --form-url, the application form link: https://applications.growthschool.io/<programId>/<formId>/<campaignId>');
   if (existsSync(join(TEMPLATES_DIR, slug))) fail(`templates/${slug} already exists`);
   if (!existsSync(join(TEMPLATES_DIR, source, 'page.json'))) fail(`No template called "${source}"`);
 
   const page = JSON.parse(readFileSync(join(TEMPLATES_DIR, source, 'page.json'), 'utf8'));
   page.slug = slug;
-  page.campaign = { format: format.id, name: campaignName, id: slug, formId };
+  page.campaign = { format: format.id, name: campaignName, id: slug, formUrl };
   mkdirSync(join(TEMPLATES_DIR, slug));
   writeFileSync(join(TEMPLATES_DIR, slug, 'page.json'), `${JSON.stringify(page, null, 2)}\n`);
   writeIndex();

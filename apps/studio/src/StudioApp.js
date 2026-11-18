@@ -1,6 +1,5 @@
 import { el, debounce } from './dom.js';
 import { FORMATS, findFormat } from '../../../packages/attribution/src/formats.js';
-import { buildTrackedLink } from '../../../packages/attribution/src/attribution.js';
 import { ThemePanel } from './panels/ThemePanel.js';
 import { BlocksPanel } from './panels/BlocksPanel.js';
 import { CampaignPanel } from './panels/CampaignPanel.js';
@@ -39,7 +38,7 @@ export class StudioApp {
     this.panels = {
       content: new BlocksPanel(store, { registry, icons, onSelect: (id) => this.preview.highlight(id) }),
       style: new ThemePanel(store),
-      campaign: new CampaignPanel(store, { onStatus: (...args) => this.#setStatus(...args) }),
+      campaign: new CampaignPanel(store, { api, onStatus: (...args) => this.#setStatus(...args) }),
     };
     this.ui = {
       formatSelect: root.querySelector('#format-select'),
@@ -124,7 +123,7 @@ export class StudioApp {
     if (!confirmed && !this.#canLeaveCurrentPage()) return;
     const draft = structuredClone(design);
     draft.slug = '';
-    draft.campaign = { format: this.format, name: '', id: '', formId: '' };
+    draft.campaign = { format: this.format, name: '', id: '', formUrl: '' };
     delete draft.createdAt;
     delete draft.updatedAt;
     delete draft.unpublished;
@@ -132,7 +131,7 @@ export class StudioApp {
     this.store.load(draft, { draft: true });
     this.ui.pageSelect.prepend(el('option', { value: '', selected: true }, '✎ New page (not published yet)'));
     this.root.querySelector('[data-tab="campaign"]').click();
-    this.#setStatus(`New ${findFormat(this.format).label} page: give it a campaign name and form ID on the Campaign tab, edit the design, then Publish.`);
+    this.#setStatus(`New ${findFormat(this.format).label} page: give it a campaign name and form URL on the Campaign tab, edit the design, then Publish.`);
   }
 
   // ---------- publishing ----------
@@ -155,9 +154,9 @@ export class StudioApp {
         await this.#refreshPages();
         this.#fillPageSelect(this.pages.filter((p) => p.format === this.format), page.slug);
       }
-      const link = buildTrackedLink({ baseUrl: location.origin, slug: page.slug, format: findFormat(page.campaign.format), campaignId: page.campaign.id });
+      const link = this.#pageLink(page.slug);
       const done = wasDraft ? 'New page is live' : wasUnpublished ? 'Page is live again' : 'Published';
-      this.#setStatus(`${done}! Tracked link for your ${findFormat(page.campaign.format).label} post:`, 'ok', link);
+      this.#setStatus(`${done}! Page link:`, 'ok', link);
     } catch (err) {
       if (err.status === 401) this.ui.token.hidden = false;
       this.#setStatus(this.#describeError(err), 'error');
@@ -223,7 +222,7 @@ export class StudioApp {
     this.ui.save.addEventListener('click', () => this.#save());
     this.ui.unpublish.addEventListener('click', () => this.#unpublish());
     this.ui.undo.addEventListener('click', () => this.store.undo());
-    this.ui.copyLink.addEventListener('click', () => this.#copyTrackedLink());
+    this.ui.copyLink.addEventListener('click', () => this.#copyPageLink());
     this.ui.token.addEventListener('change', () => { this.api.token = this.ui.token.value.trim(); });
     this.root.querySelectorAll('[data-device]').forEach((btn) => btn.addEventListener('click', () => {
       this.root.querySelectorAll('[data-device]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
@@ -265,9 +264,13 @@ export class StudioApp {
     }
   }
 
-  async #copyTrackedLink() {
-    const { slug, campaign } = this.store.page;
-    const link = buildTrackedLink({ baseUrl: location.origin, slug, format: findFormat(campaign.format), campaignId: campaign.id });
+  /** The plain page address: origin + slug, no UTMs. */
+  #pageLink(slug) {
+    return `${location.origin}/${slug}`;
+  }
+
+  async #copyPageLink() {
+    const link = this.#pageLink(this.store.page.slug);
     try {
       await navigator.clipboard.writeText(link);
       this.#setStatus(`Copied${this.store.isDirty ? ' (publish your changes first so visitors see them)' : ''}:`, 'ok', link);

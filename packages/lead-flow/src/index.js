@@ -5,6 +5,8 @@
 export { LeadValidator } from './LeadValidator.js';
 export { COUNTRIES, DEFAULT_COUNTRY, findCountry } from './countries.js';
 export { LeadFormController } from './LeadFormController.js';
+export { QuestionFlow } from './QuestionFlow.js';
+export { QuestionPanel } from './QuestionPanel.js';
 export { LeadTransport, HttpLeadTransport, PreviewLeadTransport } from './LeadTransport.js';
 export { Tracker, NullTracker } from './tracking/Tracker.js';
 export { TrackingEvents } from './tracking/TrackingEvents.js';

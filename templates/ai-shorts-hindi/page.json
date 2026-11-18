@@ -144,7 +144,6 @@
         ],
         "formTitle": "Unlock the Library",
         "submitLabel": "Get Free Access",
-        "roleOptions": "Student\nWorking professional\nFounder or business owner\nFreelancer or consultant\nContent creator\nSomething else",
         "whatsappConsent": "Send the material and updates to my WhatsApp",
         "privacyNote": "No spam. Unsubscribe in one click.",
         "successTitle": "You're in!",
@@ -201,6 +200,6 @@
     "format": "instagram",
     "name": "Hindi reels prompt pack",
     "id": "hindi-reels-prompt-pack",
-    "formId": "IG-8VPZ3K"
+    "formUrl": "https://applications.growthschool.io/PROGRAM_ID/FORM_ID/CAMPAIGN_ID"
   }
 }

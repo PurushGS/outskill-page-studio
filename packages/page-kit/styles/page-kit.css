@@ -118,15 +118,25 @@ img, svg { display: block; max-width: 100%; }
 .pk-form { display: grid; gap: 12px; }
 .pk-form .pk-h3 { margin-bottom: 4px; }
 .pk-field { display: grid; gap: 4px; }
+.pk-questions { display: grid; gap: 12px; }
+.pk-questions:empty { display: none; }
 .pk-form input:not([type="checkbox"]),
 .pk-form select {
   width: 100%; min-height: 50px; padding: 12px 14px; border-radius: calc(var(--pk-radius) * .7);
   border: 1px solid var(--pk-border); background: var(--pk-background); color: var(--pk-text);
   font: 400 16px/1.2 var(--pk-font-body); /* 16px stops iOS zooming into inputs */
 }
+/* The browser's own arrow sits right on the border, so draw one with room around it (follows the theme's muted colour). */
+.pk-form select {
+  appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 40px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--pk-muted) 50%), linear-gradient(135deg, var(--pk-muted) 50%, transparent 50%);
+  background-position: calc(100% - 21px) 50%, calc(100% - 16px) 50%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+.pk-phone select { padding-right: 34px; background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%; }
 .pk-form input:focus, .pk-form select:focus { outline: 2px solid var(--pk-accent); outline-offset: 1px; border-color: transparent; }
 .pk-form [aria-invalid="true"] { border-color: #f87171; }
-.pk-phone { display: grid; grid-template-columns: 112px 1fr; gap: 8px; }
+.pk-phone { display: grid; grid-template-columns: 124px 1fr; gap: 8px; }
 .pk-error { margin: 0; min-height: 0; font-size: 13px; color: #f87171; }
 .pk-error:empty { display: none; }
 .pk-check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--pk-muted); cursor: pointer; }

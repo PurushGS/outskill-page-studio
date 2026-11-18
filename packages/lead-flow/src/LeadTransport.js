@@ -1,39 +1,71 @@
 /**
- * Sends a submission { formId, lead, attribution, visitorId, honeypot } and
- * returns what the success panel needs: { leadId, resources, whatsappUrl }.
+ * The browser's line to the Worker. Every call carries the page slug; the
+ * Worker decides which form and campaign it belongs to.
+ *
+ *   questionFlow(formId)   → the form's questions
+ *   createLead(...)        → { leadUUID, token }
+ *   saveResponse(...)      → { formsApplicationId, formsApplicationMetadataId }
+ *   complete(...)          → { resources, whatsappUrl, redirectUrl }
  */
 export class LeadTransport {
-  async send(submission) {} // eslint-disable-line no-unused-vars
+  async questionFlow(formId) {} // eslint-disable-line no-unused-vars
+  async createLead(submission) {} // eslint-disable-line no-unused-vars
+  async saveResponse(answer) {} // eslint-disable-line no-unused-vars
+  async complete(lead) {} // eslint-disable-line no-unused-vars
 }
 
-/** Real transport: POSTs to the Worker. */
+/** Real transport: talks to the Worker. */
 export class HttpLeadTransport extends LeadTransport {
-  constructor({ endpoint, slug, fetchImpl = (...args) => fetch(...args) }) {
+  constructor({ apiBase = '', slug, fetchImpl = (...args) => fetch(...args) }) {
     super();
-    this.endpoint = endpoint;
+    this.apiBase = apiBase;
     this.slug = slug;
     this.fetch = fetchImpl;
   }
 
-  async send(submission) {
-    const response = await this.fetch(this.endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: this.slug, ...submission }),
+  questionFlow(formId) {
+    return this.#request('GET', `/api/forms/${encodeURIComponent(formId)}/questionflow`);
+  }
+
+  createLead(submission) {
+    return this.#request('POST', '/api/leads', submission);
+  }
+
+  saveResponse(answer) {
+    return this.#request('POST', '/api/leads/response', answer);
+  }
+
+  complete(lead) {
+    return this.#request('POST', '/api/leads/complete', lead);
+  }
+
+  async #request(method, path, body) {
+    const response = await this.fetch(`${this.apiBase}${path}`, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify({ slug: this.slug, ...body }) : undefined,
     });
-    const body = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const error = new Error(body.error || 'Could not submit the form. Please try again.');
-      error.fieldErrors = body.details;
+      const error = new Error(data.error || 'Could not submit the form. Please try again.');
+      error.fieldErrors = data.details;
       throw error;
     }
-    return body;
+    return data;
   }
 }
 
-/** Studio preview: never touches the network, so editors can test the success state safely. */
-export class PreviewLeadTransport extends LeadTransport {
-  async send() {
-    return { leadId: 'preview', resources: [{ label: 'Resource links appear here', url: '#' }], whatsappUrl: '#' };
+/** Studio preview: shows the real questions but never creates a lead, so editors can try the whole form safely. */
+export class PreviewLeadTransport extends HttpLeadTransport {
+  async createLead() {
+    return { leadUUID: 'preview', token: 'preview' };
+  }
+
+  async saveResponse() {
+    return {};
+  }
+
+  async complete() {
+    return { resources: [{ label: 'Resource links appear here', url: '#' }], whatsappUrl: '#', redirectUrl: '' };
   }
 }
