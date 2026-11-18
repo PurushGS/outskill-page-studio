@@ -1,5 +1,4 @@
 import { json, readJson, HttpError } from '../http/responses.js';
-import { describeRequest } from '../http/requestContext.js';
 
 /** HTTP edge of LeadService: parses the request, never contains business rules. */
 export class LeadController {
@@ -7,9 +6,29 @@ export class LeadController {
     this.leadService = leadService;
   }
 
-  submit = async (request) => {
-    const body = await readJson(request);
-    if (!body.slug || !body.lead) throw new HttpError(400, 'Body must include slug and lead');
-    return json(await this.leadService.submit(body.slug, body, describeRequest(request)), 201);
+  questionFlow = async (_request, { formId }) => {
+    const flow = await this.leadService.questionFlow(formId);
+    return json(flow, 200, { 'Cache-Control': 'public, max-age=60' });
   };
+
+  create = async (request) => {
+    const body = await this.#body(request);
+    if (!body.lead) throw new HttpError(400, 'Body must include slug and lead');
+    return json(await this.leadService.createLead(body.slug, body), 201);
+  };
+
+  saveResponse = async (request) => json(await this.leadService.saveResponse(...await this.#slugAnd(request)));
+
+  complete = async (request) => json(await this.leadService.complete(...await this.#slugAnd(request)));
+
+  async #slugAnd(request) {
+    const body = await this.#body(request);
+    return [body.slug, body];
+  }
+
+  async #body(request) {
+    const body = await readJson(request);
+    if (!body || typeof body !== 'object' || !body.slug) throw new HttpError(400, 'Body must include slug');
+    return body;
+  }
 }

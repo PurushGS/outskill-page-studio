@@ -68,7 +68,10 @@ for (const { type, defaults, schema } of registry.describe()) {
 
 test('every bundled template is valid and renders a full document', () => {
   const validator = new PageValidator(registry);
-  for (const [slug, page] of Object.entries(templates)) {
+  for (const [slug, template] of Object.entries(templates)) {
+    // Templates ship with a placeholder Form URL, so Publish stays blocked until a real one is pasted.
+    assert.ok(validator.validate(template).some((e) => e.includes('Form URL must look like')), `${slug} needs a real form URL`);
+    const page = { ...template, campaign: { ...template.campaign, formUrl: 'https://applications.growthschool.io/5122/24542/19240' } };
     assert.deepEqual(validator.validate(page), [], `${slug} should be valid`);
     const doc = renderer.render(page);
     assert.match(doc, /^<!doctype html>/);
@@ -96,10 +99,10 @@ test('validator explains problems in plain language', () => {
   page.blocks.push({ ...page.blocks[0] });
   page.blocks.push({ id: 'x', type: 'carousel' });
   page.blocks.push({ id: 'form-2', type: 'lead-form' });
-  page.campaign = { format: 'myspace', name: '', id: 'Nope', formId: 'bad id' };
+  page.campaign = { format: 'myspace', name: '', id: 'Nope', formUrl: 'not a link' };
   page.integrations.resources = [{ label: 'Guide', url: 'javascript:alert(1)' }];
   const errors = new PageValidator(registry).validate(page);
-  for (const expected of ['Page link', 'used twice', 'Unknown block type "carousel"', 'Only one application form', 'Unknown format', 'Campaign name', 'Campaign ID', 'Form ID', 'must start with https://']) {
+  for (const expected of ['Page link', 'used twice', 'Unknown block type "carousel"', 'Only one application form', 'Unknown format', 'Campaign name', 'Campaign ID', 'Form URL', 'must start with https://']) {
     assert.ok(errors.some((e) => e.includes(expected)), `expected an error mentioning "${expected}"`);
   }
 });

@@ -2,11 +2,14 @@ import { Component } from '../core/Component.js';
 import { html } from '../core/html.js';
 import { eyebrow, multiline } from '../core/ui.js';
 import { COUNTRIES, DEFAULT_COUNTRY } from '../../../lead-flow/src/countries.js';
+import { parseFormUrl } from '../../../attribution/src/formats.js';
 
 /**
- * The sign-up form. It only renders markup; behaviour (validation, submit,
- * success state) lives in lead-flow's LeadFormController, which finds the
- * form through the data-lead-form attribute.
+ * The sign-up form. It only renders markup; behaviour (validation, the
+ * form's questions, submit, success state) lives in lead-flow's
+ * LeadFormController, which finds the form through the data-lead-form
+ * attribute and fills [data-questions] with the questions of the form
+ * named by the page's Form URL.
  */
 export class LeadForm extends Component {
   static type = 'lead-form';
@@ -26,7 +29,6 @@ export class LeadForm extends Component {
     },
     { key: 'formTitle', label: 'Form title', kind: 'text' },
     { key: 'submitLabel', label: 'Submit button text', kind: 'text' },
-    { key: 'roleOptions', label: '"What do you do?" options (one per line)', kind: 'textarea' },
     { key: 'whatsappConsent', label: 'WhatsApp consent text', kind: 'text' },
     { key: 'privacyNote', label: 'Note under the button', kind: 'text' },
     { key: 'successTitle', label: 'Success title', kind: 'text' },
@@ -40,7 +42,6 @@ export class LeadForm extends Component {
     perks: [],
     formTitle: 'Unlock it now',
     submitLabel: 'Send me the material',
-    roleOptions: 'Student\nWorking professional\nFounder or business owner\nSomething else',
     whatsappConsent: 'Send updates to my WhatsApp',
     privacyNote: 'No spam. Unsubscribe any time.',
     successTitle: 'You are in!',
@@ -51,6 +52,7 @@ export class LeadForm extends Component {
   renderContent() {
     const p = this.props;
     const { slug, campaign = {} } = this.context.page;
+    const form = parseFormUrl(campaign.formUrl);
     return html`<div class="pk-container pk-lead-form__layout" id="join">
       <div class="pk-lead-form__copy">
         ${eyebrow(p.eyebrow, this.editable('eyebrow'))}
@@ -59,7 +61,7 @@ export class LeadForm extends Component {
         ${p.perks.length ? html`<ul class="pk-perks">${p.perks.map((perk, i) => html`<li><span${this.editable(`perks.${i}.icon`)}>${this.icon(perk.icon)}</span><span${this.editable(`perks.${i}.text`)}>${perk.text}</span></li>`)}</ul>` : ''}
       </div>
       <div class="pk-panel">
-        <form class="pk-form" id="${campaign.formId || 'application-form'}" data-lead-form data-slug="${slug}" data-form-id="${campaign.formId || ''}" novalidate>
+        <form class="pk-form" id="application-form" data-lead-form data-slug="${slug}" data-form-url="${campaign.formUrl || ''}" data-form-id="${form?.formId ?? ''}" novalidate>
           <h3 class="pk-h3"${this.editable('formTitle')}>${p.formTitle}</h3>
           ${this.#field('name', html`<input id="${this.id}-name" name="name" autocomplete="name" placeholder="Full name">`, 'Full name')}
           ${this.#field('email', html`<input id="${this.id}-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="Email address">`, 'Email address')}
@@ -71,7 +73,7 @@ export class LeadForm extends Component {
             </div>
             <p class="pk-error" data-error-for="phone"></p>
           </div>
-          ${this.#roleField()}
+          <div class="pk-questions" data-questions></div>
           ${this.#honeypot()}
           <label class="pk-check"><input type="checkbox" name="whatsappOptIn" checked><span${this.editable('whatsappConsent')}>${p.whatsappConsent}</span></label>
           <button class="pk-btn pk-btn--primary pk-btn--block" type="submit"${this.editable('submitLabel')}>${p.submitLabel}</button>
@@ -99,15 +101,5 @@ export class LeadForm extends Component {
    */
   #honeypot() {
     return html`<div class="pk-hp" aria-hidden="true"><label>Company website<input name="company_website" tabindex="-1" autocomplete="off"></label></div>`;
-  }
-
-  #roleField() {
-    const options = String(this.props.roleOptions || '').split('\n').map((o) => o.trim()).filter(Boolean);
-    if (!options.length) return '';
-    return this.#field(
-      'role',
-      html`<select id="${this.id}-role" name="role"><option value="" selected disabled>What do you do?</option>${options.map((o) => html`<option>${o}</option>`)}</select>`,
-      'What do you do?',
-    );
   }
 }

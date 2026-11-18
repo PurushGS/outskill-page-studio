@@ -57,7 +57,7 @@ ${this.#bootScript(page, mode)}
     const config = {
       slug: page.slug,
       mode,
-      endpoint: `${this.assetBase}/api/leads`,
+      apiBase: this.assetBase,
     };
     // "<" is escaped so page text can never close the script tag early.
     const json = JSON.stringify(config).replace(/</g, '\\u003c');

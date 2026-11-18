@@ -7,7 +7,7 @@ import { HttpError } from '../http/responses.js';
  *   2. Bundled templates (templates/<slug>/page.json): shipped with the code,
  *      used as starting points and as a fallback if KV is empty.
  *
- * Each KV entry also carries small metadata (format, campaign, form ID) so the
+ * Each KV entry also carries small metadata (format, campaign, form URL) so the
  * page list can be filtered by format without reading every page.
  */
 export class PageRepository {
@@ -45,7 +45,7 @@ export class PageRepository {
     await this.kv.put(this.#key(page.slug), JSON.stringify(page), { metadata: summarize(page) });
   }
 
-  /** @returns {Promise<Array<{ slug, source: 'studio'|'template', format, campaignName, campaignId, formId, unpublished }>>} */
+  /** @returns {Promise<Array<{ slug, source: 'studio'|'template', format, campaignName, campaignId, formUrl, unpublished }>>} */
   async list() {
     const all = new Map(Object.values(this.bundled).map((page) => [page.slug, { ...summarize(page), source: 'template' }]));
     let cursor;
@@ -71,7 +71,7 @@ function summarize(page) {
     format: page.campaign?.format ?? '',
     campaignName: page.campaign?.name ?? '',
     campaignId: page.campaign?.id ?? '',
-    formId: page.campaign?.formId ?? '',
+    formUrl: page.campaign?.formUrl ?? '',
     unpublished: Boolean(page.unpublished),
   };
 }

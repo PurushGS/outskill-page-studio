@@ -9,7 +9,7 @@
     "format": "youtube",
     "name": "AI Jobs guide · Nov 2026",
     "id": "ai-jobs-nov-2026",
-    "formId": "YT-7KQ2MD"
+    "formUrl": "https://applications.growthschool.io/PROGRAM_ID/FORM_ID/CAMPAIGN_ID"
   },
   "theme": {
     "colors": {
@@ -329,7 +329,6 @@
         ],
         "formTitle": "Unlock the Full Guide",
         "submitLabel": "Get Free Access",
-        "roleOptions": "Student\nWorking professional\nFounder or business owner\nFreelancer or consultant\nContent creator\nSomething else",
         "whatsappConsent": "Send me updates on WhatsApp",
         "privacyNote": "Takes 30 seconds. We never share your details.",
         "successTitle": "You're in!",

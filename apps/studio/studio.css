@@ -156,3 +156,14 @@ a.btn[aria-disabled] { pointer-events: none; opacity: .45; }
   .stage { padding: 10px; }
   .stage__frame[data-device="mobile"] { width: 100%; max-width: 390px; }
 }
+
+/* "Questions on this form" under the Form URL */
+.q-preview { display: grid; gap: 8px; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: #f9fafb; }
+.q-preview[hidden] { display: none; }
+.q-preview__title { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.q-preview__item { display: flex; gap: 8px; align-items: flex-start; }
+.q-preview__num { flex: none; width: 20px; height: 20px; border-radius: 50%; background: #dbeafe; color: #2563eb; font-size: 10px; font-weight: 700; display: grid; place-items: center; margin-top: 1px; }
+.q-preview__q { margin: 0; font-size: 12px; font-weight: 500; }
+.q-preview__req { color: #f87171; margin-left: 2px; }
+.q-preview__meta { margin: 0; font-size: 10px; color: var(--muted); }
+.hint--error { color: var(--danger); }

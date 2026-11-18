@@ -6,15 +6,15 @@ import { AttributionCollector } from '../../attribution/src/AttributionCollector
 
 /**
  * Entry point PageRenderer adds to every page.
- * @param {{ slug: string, mode: 'live'|'preview', endpoint: string }} config
+ * @param {{ slug: string, mode: 'live'|'preview', apiBase: string }} config
  */
 export function bootLeadFlow(config) {
   const isPreview = config.mode === 'preview';
   const tracker = createTracker(config);
   const attribution = new AttributionCollector();
   const transport = isPreview
-    ? new PreviewLeadTransport()
-    : new HttpLeadTransport({ endpoint: config.endpoint, slug: config.slug });
+    ? new PreviewLeadTransport({ apiBase: config.apiBase, slug: config.slug })
+    : new HttpLeadTransport({ apiBase: config.apiBase, slug: config.slug });
 
   tracker.track(TrackingEvents.PAGE_VIEWED, { slug: config.slug });
 
@@ -25,6 +25,7 @@ export function bootLeadFlow(config) {
       transport,
       tracker,
       attribution,
+      redirect: isPreview ? null : undefined, // the studio preview never leaves the page
     }).start();
   }
   bindPageControls();

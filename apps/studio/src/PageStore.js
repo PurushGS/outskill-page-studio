@@ -23,7 +23,7 @@ export class PageStore extends EventTarget {
     return this.#dirty;
   }
 
-  /** A new page that has never been published (no slug claimed, no form ID yet). */
+  /** A new page that has never been published (no slug claimed, no form URL yet). */
   get isDraft() {
     return this.#isDraft;
   }

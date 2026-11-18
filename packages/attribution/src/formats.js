@@ -18,9 +18,27 @@ export function findFormat(id) {
   return FORMATS.find((f) => f.id === id) ?? null;
 }
 
+export const FORM_URL_EXAMPLE = 'https://applications.growthschool.io/5122/24542/19240';
+
 /**
- * Form IDs come from our application-form table and are typed in the studio,
- * so any ID that system uses fits: letters, numbers, dot, dash, underscore.
- * Several pages may share one form ID.
+ * The application form's link, pasted in the studio. Any host works
+ * (applications.growthschool.io, applications.outskill.com, …); the path is:
+ *   /<programId>/<formId>/<campaignId>     or, without a campaign,    /<programId>/<formId>
+ * Returns the IDs (campaignId is null when the link has none), or null if the
+ * link doesn't have that shape. Several pages may share one form URL.
+ *
+ * @returns {{ programId: number, formId: number, campaignId: number | null } | null}
  */
-export const FORM_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+export function parseFormUrl(value) {
+  let url;
+  try {
+    url = new URL(String(value ?? '').trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+  const parts = url.pathname.split('/').filter(Boolean);
+  if (parts.length < 2 || parts.length > 3 || !parts.every((part) => /^[1-9]\d{0,9}$/.test(part))) return null;
+  const [programId, formId, campaignId = null] = parts.map(Number);
+  return { programId, formId, campaignId };
+}

@@ -6,7 +6,7 @@ import { HttpError } from '../http/responses.js';
  * Rules for creating and updating pages, kept out of the HTTP layer:
  *   - the page link (slug) is made from the campaign name when the page is
  *     created, and never changes afterwards so shared links keep working
- *   - the format never changes after creation; the form ID is whatever the
+ *   - the format never changes after creation; the campaign ID is always the page link; the form URL is whatever the
  *     editor typed and may be edited later
  *   - unpublishing keeps the page but takes it off the web; publishing again brings it back
  *   - nothing invalid is ever saved
@@ -29,14 +29,14 @@ export class PageService {
     if (slug && await this.pages.exists(slug)) {
       throw new HttpError(409, `A page with the link /${slug} already exists. Use a different campaign name (e.g. add the month or channel).`);
     }
-    return this.#validateAndSave({ ...draft, slug }, { createdAt: this.now().toISOString() });
+    return this.#validateAndSave({ ...draft, slug, campaign: { ...draft.campaign, id: slug } }, { createdAt: this.now().toISOString() });
   }
 
   /** Publishing always puts the page (back) on the web. */
   async update(slug, incoming) {
     if (incoming.slug !== slug) throw new HttpError(400, `Slug in the URL ("${slug}") and body ("${incoming.slug}") differ`);
     const existing = await this.pages.get(slug);
-    const { unpublished, ...page } = { ...incoming, campaign: { ...incoming.campaign, format: existing.campaign?.format } };
+    const { unpublished, ...page } = { ...incoming, campaign: { ...incoming.campaign, format: existing.campaign?.format, id: existing.campaign?.id || slug } };
     return this.#validateAndSave(page, { createdAt: existing.createdAt });
   }
 
