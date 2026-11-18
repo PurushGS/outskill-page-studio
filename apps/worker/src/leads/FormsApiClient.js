@@ -6,6 +6,7 @@
  *   POST  /leads?formId=                                   create the lead → { token }
  *   POST  /leads/form/responses?formId=&leadUUID=          one answer (last one: IsFullySubmitted: true)
  *   PATCH /leads/application/completed?leadUUID=           mark the application complete (returns no redirect URL)
+ *   POST  /leads/webengage/external                        a custom WebEngage event for the lead (distinct_id = leadUUID)
  *
  * The address (FORM_API_URL) and the bearer token (FORMS_API_TOKEN) come from the
  * Worker's environment only; nothing is hardcoded or defaulted. They live only here, on the server.
@@ -51,6 +52,15 @@ export class FormsApiClient {
 
   completeApplication(leadUUID, userToken) {
     return this.#call('PATCH', `/leads/application/completed?leadUUID=${encodeURIComponent(leadUUID)}`, { auth: true, userToken });
+  }
+
+  /**
+   * Fires a custom WebEngage event through the backend, which matches the
+   * WebEngage user by leadUUID. No token: the endpoint is open, like the questions.
+   * @param {{ eventName: string, distinct_id: string, eventTime: string, eventData: object }} event
+   */
+  webengageEvent(event) {
+    return this.#call('POST', '/leads/webengage/external', { body: event });
   }
 
   async #call(method, path, { body, auth = false, userToken = '' } = {}) {

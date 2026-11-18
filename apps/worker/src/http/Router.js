@@ -1,6 +1,8 @@
 /**
- * Minimal method + path router. Patterns use ":name" segments:
+ * Minimal method + path router. Patterns use ":name" segments, optionally
+ * limited by a pattern in brackets:
  *   router.get('/api/pages/:slug', handler)  → handler(request, { slug })
+ *   router.get('/:slug/:formId(\\d+)', handler)  only matches a numeric formId
  */
 export class Router {
   #routes = [];
@@ -20,7 +22,7 @@ export class Router {
   }
 
   #add(method, pattern, handler) {
-    const source = pattern.replace(/\/:(\w+)/g, '/(?<$1>[^/]+)');
+    const source = pattern.replace(/\/:(\w+)(?:\(([^)]+)\))?/g, (_, name, only) => `/(?<${name}>${only || '[^/]+'})`);
     this.#routes.push({ method, regex: new RegExp(`^${source}/?$`), handler });
     return this;
   }

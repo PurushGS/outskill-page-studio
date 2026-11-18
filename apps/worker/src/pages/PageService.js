@@ -3,7 +3,7 @@ import { slugify } from '../../../../packages/attribution/src/attribution.js';
 import { HttpError } from '../http/responses.js';
 
 /** Paths the app itself uses, so no campaign can take them as its page link. */
-export const RESERVED_SLUGS = new Set(['studio', 'api', 'apps', 'packages', 'templates', 'admin', 'login', 'favicon-ico', 'robots-txt']);
+export const RESERVED_SLUGS = new Set(['studio', 'api', 'apps', 'packages', 'templates', 'admin', 'login', 'favicon-ico', 'robots-txt', 'r', 'files']);
 
 /**
  * Rules for creating and updating pages, kept out of the HTTP layer:

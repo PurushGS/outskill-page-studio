@@ -38,6 +38,9 @@ export class FieldEditor {
         return field(spec.label, el('input', { class: 'input', type: 'text', inputmode: 'url', value, placeholder: 'https://… or #section', oninput: (e) => set(e.target.value) }));
       case 'icon':
         return field(spec.label, new IconPicker(this.icons, value, set).render());
+      case 'choice':
+        return field(spec.label, el('select', { class: 'input', onchange: (e) => set(e.target.value) },
+          spec.options.map((o) => el('option', { value: o.value, selected: o.value === (value || spec.options[0].value) }, o.label))));
       case 'list':
         return this.#list(spec, path);
       default:
@@ -54,7 +57,7 @@ export class FieldEditor {
       fn(parent[path.at(-1)]);
     });
     const move = (from, to) => editList((list) => list.splice(to, 0, ...list.splice(from, 1)));
-    const blankItem = () => Object.fromEntries(spec.itemSchema.map((s) => [s.key, s.kind === 'icon' ? 'sparkles' : '']));
+    const blankItem = () => Object.fromEntries(spec.itemSchema.map((s) => [s.key, s.kind === 'icon' ? 'sparkles' : s.kind === 'choice' ? s.options[0].value : '']));
 
     return el('fieldset', { class: 'list-field' },
       el('legend', {}, `${spec.label} (${items.length})`),

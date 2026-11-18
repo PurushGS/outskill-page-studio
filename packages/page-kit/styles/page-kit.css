@@ -297,6 +297,8 @@ img, svg { display: block; max-width: 100%; }
 
 .pk-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .pk-success__links { display: grid; gap: 10px; width: 100%; }
+.pk-redirect-note { margin: 0; font-size: 14px; }
+.pk-redirect-note button { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 
 /* ---------- Tablet & desktop ---------- */
 

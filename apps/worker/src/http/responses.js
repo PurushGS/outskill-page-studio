@@ -25,3 +25,8 @@ export async function readJson(request) {
     throw new HttpError(400, 'Request body must be valid JSON');
   }
 }
+
+/** A plain message page (not found, ended campaign). Callers pass fixed text or cleaned values only. */
+export function messageHtml(title, text) {
+  return `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><body style="font-family:system-ui;padding:40px;text-align:center"><h1>${title}</h1><p>${text}</p></body>`;
+}

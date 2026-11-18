@@ -29,7 +29,10 @@ export class PageRenderer {
   render(page, { mode = 'live' } = {}) {
     const theme = new Theme(page.theme);
     const context = { icons: this.icons, page, mode };
-    const blocks = page.blocks.map((block) => this.registry.create(block, context).render());
+    const components = page.blocks.map((block) => this.registry.create(block, context));
+    const blocks = components.map((component) => component.render());
+    // Block families with their own look (e.g. the showcase blocks) bring a stylesheet and script, loaded only where used.
+    const extras = (key) => [...new Set(components.map((c) => c[key] ?? c.constructor[key]).filter(Boolean))];
 
     return `<!doctype html>${html`<html lang="${page.meta.lang || 'en'}">
 <head>
@@ -44,11 +47,13 @@ ${page.meta.image ? html`<meta property="og:image" content="${page.meta.image}">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${theme.fontStylesheetUrl()}">
 <link rel="stylesheet" href="${this.assetBase}/packages/page-kit/styles/page-kit.css">
+${extras('stylesheet').map((name) => html`<link rel="stylesheet" href="${this.assetBase}/packages/page-kit/styles/${name}.css">`)}
 <style>${raw(theme.toCss())}</style>
 </head>
 <body>
 ${blocks}
 ${this.#bootScript(page, mode)}
+${extras('script').map((name) => html`<script type="module" src="${this.assetBase}/packages/page-kit/src/client/${name}.js"></script>`)}
 </body>
 </html>`}`;
   }

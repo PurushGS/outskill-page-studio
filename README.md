@@ -28,12 +28,14 @@ You never deploy anything. **Publish** in the studio is all it takes to put a pa
    - If it has pages, pick one from **Page**.
    - If it has none, the template opens as a new page, ready to edit.
    - **+ New page** starts a new page in the selected format with the design you're looking at.
+   - **The Outskill library design** (dark hero, colour cards, white form card): open **Workflow library · Showcase** under YouTube, then press **+ New page**. Its sections are the "Showcase · …" blocks; each light or dark section can be switched under **Section colour**. The application form uses its **Showcase** look (form block → **Look**).
 3. On the **Campaign** tab of a new page:
    - Type the **campaign name**. The page link is made from it (`AI Jobs · Nov 2026` → `/ai-jobs-nov-2026`) and cannot change after publishing. Renaming the campaign later keeps the same link.
    - Paste the **Form URL**: `https://applications.growthschool.io/<program>/<form>/<campaign>`. It's required, and you can change it later. Under the box you'll see the program, form and campaign it read from the link, and the form's questions appear in the preview.
    - The campaign ID is the page link, filled in automatically.
-   - **Redirect URL** (optional, under Page link): after someone applies they see a thank-you and are sent to this link after 3 seconds, with a Continue button to go at once. Leave it empty to show the resource links and WhatsApp button instead.
-   - Add the **resource links** people get after applying and the **WhatsApp community link**.
+   - **Redirect URL** (optional, under Page link): after someone applies they see a thank-you, a 5-second countdown and a Continue button, then are sent to this link. Leave it empty to show the resource links and the WhatsApp button instead.
+   - **PDF sent by email:** Upload PDF (up to 25 MB). It's stored in the R2 bucket `outskill-page-files` and served at `/files/…`. Emails use the page's short link `/r/<campaign-name>`, which always opens the current PDF, so Replace PDF also reaches people with older emails.
+   - Add the **resource links** people get after applying and the **WhatsApp community link**. With a WhatsApp link (and no Redirect URL), the thank-you screen counts down 5 seconds and then opens the community. "Stay on this page", or clicking any button there, stops the countdown.
 4. **Content**: click any text or icon in the preview to edit it. Move sections with ↑ ↓, remove with ✕, add with **+ Add section**. The application form has a 🔒: it stays on every page.
 5. **Style**: palettes, colours, fonts, corner roundness. Check **Mobile** before publishing.
 6. Press **Publish** (⌘S). The green bar gives you the **tracked link** for that format. Paste it in the post, video description or bio.
@@ -114,13 +116,15 @@ Spam: a hidden honeypot field. Bots that fill it get a normal-looking response, 
 export class Testimonials extends Component {
   static type = 'testimonials';
   static label = 'Testimonials';
-  static schema = [{ key: 'title', label: 'Title', kind: 'text' } /* text | textarea | url | icon | list */];
+  static schema = [{ key: 'title', label: 'Title', kind: 'text' } /* text | textarea | url | icon | choice | list */];
   static defaults = { title: 'What people say' };
   renderContent() { return html`<div class="pk-container">…</div>`; }
 }
 ```
 
 Register it in `createDefaultRegistry()` and add its CSS. It then shows up under **+ Add section** in the studio.
+
+A family of blocks with its own look can bring its own files: `static stylesheet = 'showcase'` and `static script = 'showcase'` load `packages/page-kit/styles/showcase.css` and `packages/page-kit/src/client/showcase.js`, only on pages that use one of those blocks. The showcase blocks (`components/showcase/`, the Outskill library design) work this way.
 
 ### Adding analytics (WebEngage) later
 
@@ -141,11 +145,11 @@ Who does what:
 
 **Automatic deploys.** Push the repo to GitHub and add two repository secrets: `CLOUDFLARE_API_TOKEN` (create it with the "Edit Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID`. Then `.github/workflows/deploy.yml` tests and deploys every push to `main`.
 
-**Public domain (`outskill.com/<path>/`).** Pages are shared as `https://outskill.com/<path>/<campaign-name>`. The studio stays on `workers.dev`. Pick the path (e.g. `resources`), then:
-1. Set `PUBLIC_BASE_URL` to `https://outskill.com/<path>` in `wrangler.jsonc` (`vars`). Pages then load their files and send applications under that path, and the studio shows and copies those links.
-2. Send `outskill.com/<path>/*` to the Worker, whichever applies:
-   - **outskill.com is on this Cloudflare account:** uncomment the `routes` line in `wrangler.jsonc`. A route only takes that path; the rest of outskill.com is untouched.
-   - **outskill.com is hosted elsewhere** (e.g. Vercel, Webflow, Netlify): add a rewrite/reverse proxy on that host from `/<path>/:rest*` to `https://outskill-page-studio.engineering-279.workers.dev/<path>/:rest*`. The Worker accepts requests with or without the path. Have the proxy forward the visitor's country (e.g. a header), because `request.cf` geo would otherwise be the proxy's location.
+**Public domain (`outskill.live`).** Pages are shared as `https://outskill.live/<campaign-name>`. After someone applies, the address becomes `/<campaign-name>/<programId>/<formId>/<campaignId?>` (UTM tags kept), and that link opens the same page. The studio stays on `workers.dev`: on the public domain the Worker serves only pages, their CSS/JS and the form's calls, and answers everything else (studio, editing API, templates) with "not found" (`isPublicHost` in `app.js`). Pages can also live under a path (`outskill.live/<path>/<campaign-name>`). Then:
+1. Set `PUBLIC_BASE_URL` to `https://outskill.live` (or `https://outskill.live/<path>`) in `wrangler.jsonc` (`vars`). Pages then load their files and send applications under that path, and the studio shows and copies those links.
+2. Send `outskill.live/<path>/*` to the Worker, whichever applies:
+   - **outskill.live is on this Cloudflare account:** uncomment the `routes` line in `wrangler.jsonc` (a custom domain for the whole domain, or a route for just the path).
+   - **The domain is hosted elsewhere** (e.g. Vercel, Webflow, Netlify): add a rewrite/reverse proxy on that host from `/<path>/:rest*` to `https://outskill-page-studio.engineering-279.workers.dev/<path>/:rest*`. The Worker accepts requests with or without the path. Have the proxy forward the visitor's country (e.g. a header), because `request.cf` geo would otherwise be the proxy's location.
 3. Push to `main`. Old `workers.dev` links keep working.
 
 Campaign names that would take the site's own paths (`studio`, `api`, `apps`, …) are refused; see `RESERVED_SLUGS` in `PageService.js`.

@@ -44,8 +44,9 @@ export class CampaignPanel extends Panel {
       el('h3', { class: 'panel__title' }, 'Campaign'),
       this.#campaignFields(),
       el('h3', { class: 'panel__title' }, 'After someone applies'),
+      this.#emailPdf(),
       this.fields.render(RESOURCE_SCHEMA, ['integrations']),
-      this.#input(['integrations', 'whatsappCommunityUrl'], 'WhatsApp community invite link', 'e.g. https://chat.whatsapp.com/… Leave empty to hide the button'),
+      this.#input(['integrations', 'whatsappCommunityUrl'], 'WhatsApp community invite link', 'e.g. https://chat.whatsapp.com/… After applying, people see a 5-second countdown and are taken here (unless a Redirect URL is set). Leave empty to hide the button'),
       el('h3', { class: 'panel__title' }, 'Sharing & SEO'),
       this.#input(['meta', 'title'], 'Page title', 'Browser tab and link previews on WhatsApp, X, LinkedIn'),
       this.#input(['meta', 'description'], 'Description'),
@@ -98,7 +99,7 @@ export class CampaignPanel extends Panel {
         ? 'Saved with every application. The page link is made from it, so choose carefully: the link cannot change after publishing'
         : 'Saved with every application. Renaming does not change the page link, so shared links keep working'),
       field('Page link', pageLink),
-      field('Redirect URL', redirectInput, 'Optional. After someone applies, they see a thank-you message and are sent to this link after a few seconds'),
+      field('Redirect URL', redirectInput, 'Optional. After someone applies, they see a thank-you message and a 5-second countdown, then go to this link. Takes the place of the WhatsApp community redirect'),
       field('Form URL', [formUrlInput, formIds, questions.root], 'Required. The application form link: program ID / form ID / campaign ID (campaign is optional). Applications from this page go to that form'),
     ];
   }
@@ -144,6 +145,64 @@ export class CampaignPanel extends Panel {
         if (ids) timer = setTimeout(() => load(ids.formId), 600);
       },
     };
+  }
+
+  /**
+   * The PDF the confirmation email links to. Uploaded to the app's file
+   * storage; emails use the page's short link /r/<campaign>, which always
+   * opens the current file, so Replace also reaches people with older emails.
+   */
+  #emailPdf() {
+    const path = ['integrations', 'emailPdf'];
+    const current = el('div', { class: 'pdf-file' });
+    const status = el('small', { class: 'hint' });
+    const input = el('input', { type: 'file', accept: 'application/pdf,.pdf', hidden: true });
+    const pick = el('button', { type: 'button', class: 'btn btn--ghost btn--sm', onclick: () => input.click() });
+
+    const show = () => {
+      const pdf = this.store.get(path);
+      pick.textContent = pdf ? 'Replace PDF' : 'Upload PDF';
+      current.replaceChildren(...(pdf
+        ? [
+          el('a', { href: `/files/${pdf.key}`, target: '_blank', rel: 'noopener' }, pdf.name),
+          el('span', { class: 'hint' }, ` · ${pdf.size < 1024 * 1024 ? `${Math.max(1, Math.round(pdf.size / 1024))} KB` : `${(pdf.size / 1024 / 1024).toFixed(1)} MB`}`),
+          el('button', { type: 'button', class: 'btn btn--ghost btn--sm', onclick: () => { this.store.set(path, undefined); show(); status.textContent = 'Removed. Publish to save.'; } }, 'Remove'),
+        ]
+        : [el('span', { class: 'hint' }, 'No PDF yet')]));
+    };
+
+    input.addEventListener('change', async () => {
+      const file = input.files[0];
+      input.value = '';
+      if (!file) return;
+      if (file.size > 25 * 1024 * 1024) return void (status.textContent = 'PDFs can be up to 25 MB.');
+      status.className = 'hint';
+      status.textContent = `Uploading ${file.name}…`;
+      pick.disabled = true;
+      try {
+        const { file: saved } = await this.api.uploadPdf(this.store.page.slug, file);
+        this.#ensureParent(path);
+        this.store.set(path, saved);
+        show();
+        status.textContent = 'Uploaded. Publish to save it with the page.';
+      } catch (err) {
+        status.className = 'hint hint--error';
+        status.textContent = err.status === 401 ? 'Uploading needs your studio link. Open the studio from the link you were sent.' : err.message;
+      } finally {
+        pick.disabled = false;
+      }
+    });
+    show();
+
+    const { slug } = this.store.page;
+    const shortLink = this.store.isDraft
+      ? el('small', { class: 'hint' }, 'The download link for emails appears here after publishing.')
+      : [el('code', { class: 'page-link' }, `${this.publicBaseUrl}/r/${slug}`), el('small', { class: 'hint' }, 'Use this link in emails. It always opens the current PDF.')];
+    // A div, not field()'s <label>: clicking a label would press the first button inside it (Remove).
+    return el('div', { class: 'field' },
+      el('span', { class: 'field__label' }, 'PDF sent by email'),
+      current, pick, input, status, shortLink,
+      el('small', { class: 'field__hint' }, 'One PDF, up to 25 MB. People get it in the confirmation email'));
   }
 
   #trackedLinks(format) {

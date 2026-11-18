@@ -26,6 +26,8 @@ export function bootLeadFlow(config) {
       tracker,
       attribution,
       redirect: isPreview ? null : undefined, // the studio preview never leaves the page
+      showAddress: isPreview ? null : undefined, // nor changes its address
+      basePath: config.apiBase || '',
     }).start();
   }
   bindPageControls();

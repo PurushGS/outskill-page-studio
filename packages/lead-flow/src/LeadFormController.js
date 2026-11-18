@@ -1,3 +1,4 @@
+import { parseFormUrl } from '../../attribution/src/formats.js';
 import { LeadValidator } from './LeadValidator.js';
 import { QuestionFlow } from './QuestionFlow.js';
 import { QuestionPanel } from './QuestionPanel.js';
@@ -13,8 +14,8 @@ import { TrackingEvents } from './tracking/TrackingEvents.js';
  *      (so a visitor who leaves half way is still captured)
  *   3. the last unanswered question's answer is held back; Submit sends it
  *      as "fully submitted" and completes the application, then shows the
- *      success panel (or the thank-you message and a redirect, if the page
- *      has a Redirect URL)
+ *      success panel, which counts down and then sends the visitor on: to
+ *      the page's Redirect URL if it has one, else to its WhatsApp community
  *
  * Collaborators are injected (validator, tracker, transport, attribution)
  * so each can be replaced in tests or reused in another project's form.
@@ -30,9 +31,11 @@ export class LeadFormController {
    * @param {LeadValidator} [deps.validator]
    * @param {number} [deps.createDelayMs]  pause after typing before the lead is created
    * @param {(url: string) => void} [deps.redirect]  how to leave the page (replaced in tests; null = never redirect, e.g. preview)
-   * @param {number} [deps.redirectDelayMs]
+   * @param {number} [deps.redirectSeconds]  countdown on the thank-you screen before the visitor is sent on
+   * @param {string} [deps.basePath]  the public path pages live under ("" on outskill.live)
+   * @param {(path: string) => void} [deps.showAddress]  how the address bar is changed after applying (null = never, e.g. preview)
    */
-  constructor({ form, successPanel, transport, tracker, attribution, validator = new LeadValidator(), createDelayMs = 800, redirect = (url) => { window.location.href = url; }, redirectDelayMs = 3000 }) {
+  constructor({ form, successPanel, transport, tracker, attribution, validator = new LeadValidator(), createDelayMs = 800, redirect = (url) => { window.location.href = url; }, redirectSeconds = 5, basePath = '', showAddress = (path) => { window.history.replaceState(window.history.state, '', path + window.location.search + window.location.hash); } }) {
     this.form = form;
     this.successPanel = successPanel;
     this.transport = transport;
@@ -41,7 +44,9 @@ export class LeadFormController {
     this.validator = validator;
     this.createDelayMs = createDelayMs;
     this.redirect = redirect;
-    this.redirectDelayMs = redirectDelayMs;
+    this.redirectSeconds = redirectSeconds;
+    this.basePath = basePath;
+    this.showAddress = showAddress;
     this.submitButton = form.querySelector('[type="submit"]');
     this.status = form.querySelector('.pk-form__status');
     const host = form.querySelector('[data-questions]');
@@ -92,9 +97,11 @@ export class LeadFormController {
       const last = this.held ?? this.questions?.answers().at(-1);
       if (last) await this.#sendAnswer(last, true);
 
-      const result = await this.transport.complete({ leadUUID: this.lead.leadUUID, userJwt: this.lead.token });
+      // The visit's UTMs go along so the WebEngage event (sent by the server) carries them.
+      const result = await this.transport.complete({ leadUUID: this.lead.leadUUID, userJwt: this.lead.token, attribution: this.attribution.collect() });
       this.tracker.identify(lead.email, { email: lead.email, name: lead.name, phone: lead.phone });
       this.tracker.track(TrackingEvents.LEAD_SUBMITTED, { leadId: this.lead.leadUUID, formUrl: this.form.dataset.formUrl });
+      this.#showApplied();
       this.#showSuccess(result);
     } catch (err) {
       if (err.fieldErrors) this.#showErrors(err.fieldErrors);
@@ -243,6 +250,21 @@ export class LeadFormController {
     this.status.textContent = '';
   }
 
+  /**
+   * The address becomes /<campaign>/<programId>/<formId>/<campaignId?>, like
+   * the LP Management System's pages, keeping the UTM tags. That link opens the same page.
+   */
+  #showApplied() {
+    const ids = parseFormUrl(this.form.dataset.formUrl);
+    if (!ids || !this.showAddress) return;
+    const parts = [this.form.dataset.slug, ids.programId, ids.formId, ids.campaignId].filter((part) => part != null && part !== '');
+    try {
+      this.showAddress(`${this.basePath}/${parts.join('/')}`);
+    } catch {
+      // Changing the address is a nicety; the application is already in.
+    }
+  }
+
   /** @param {{ resources: Array<{label: string, url: string}>, whatsappUrl: string, redirectUrl?: string }} result */
   #showSuccess({ resources = [], whatsappUrl, redirectUrl = '' }) {
     const doc = this.form.ownerDocument;
@@ -270,6 +292,42 @@ export class LeadFormController {
     this.form.hidden = true;
     this.successPanel.hidden = false;
     this.successPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (goesOn && this.redirect) setTimeout(() => this.redirect(redirectUrl), this.redirectDelayMs);
+
+    if (goesOn) this.#countdown(redirectUrl, 'Taking you to the next step');
+    else if (/^https?:\/\//i.test(whatsappUrl || '')) this.#countdown(whatsappUrl, 'Taking you to our WhatsApp community');
+  }
+
+  /**
+   * "Taking you to … in 5…", then leaves the page. "Stay on this page", or
+   * clicking any button on the thank-you screen, stops it. The studio preview
+   * (redirect = null) shows the countdown but never leaves.
+   */
+  #countdown(url, message) {
+    const note = this.successPanel.querySelector('[data-redirect-note]');
+    let left = this.redirectSeconds;
+    let timer = null;
+    const stay = () => {
+      clearInterval(timer);
+      if (note) note.hidden = true;
+    };
+    const show = () => {
+      if (!note) return;
+      const doc = note.ownerDocument;
+      const button = doc.createElement('button');
+      button.type = 'button';
+      button.textContent = 'Stay on this page';
+      button.addEventListener('click', stay);
+      note.replaceChildren(`${message} in ${left}s… `, button);
+      note.hidden = false;
+    };
+    show();
+    for (const link of this.successPanel.querySelectorAll('a')) link.addEventListener('click', stay, { once: true });
+    timer = setInterval(() => {
+      left -= 1;
+      if (left > 0) return show();
+      clearInterval(timer);
+      if (note) note.textContent = `${message}…`;
+      this.redirect?.(url);
+    }, 1000);
   }
 }

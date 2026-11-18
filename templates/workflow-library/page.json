@@ -1,0 +1,710 @@
+{
+  "slug": "workflow-library",
+  "meta": {
+    "title": "Outskill | Free AI Workflow Library",
+    "description": "Free step-by-step guides, prompts and templates behind every Outskill video, plus a directory of AI tools sorted by what they do and what they cost.",
+    "lang": "en"
+  },
+  "campaign": {
+    "format": "youtube",
+    "name": "Workflow library · Showcase",
+    "id": "workflow-library",
+    "formUrl": "https://applications.growthschool.io/PROGRAM_ID/FORM_ID/CAMPAIGN_ID"
+  },
+  "theme": {
+    "colors": {
+      "background": "#07080b",
+      "surface": "#111214",
+      "text": "#f5f5f4",
+      "muted": "#a3a6aa",
+      "accent": "#b8ef43",
+      "accentText": "#0b0b0c",
+      "border": "#2a2a2e"
+    },
+    "fonts": {
+      "heading": "Fira Sans",
+      "body": "Fira Sans"
+    },
+    "radius": 10
+  },
+  "integrations": {
+    "resources": [],
+    "whatsappCommunityUrl": "https://chat.whatsapp.com/REPLACE_WITH_COMMUNITY_INVITE"
+  },
+  "blocks": [
+    {
+      "id": "top",
+      "type": "sc-hero",
+      "props": {
+        "brand": "Outskill",
+        "navLinks": [
+          {
+            "label": "Library",
+            "href": "#library"
+          },
+          {
+            "label": "Videos",
+            "href": "#videos"
+          },
+          {
+            "label": "AI Tools",
+            "href": "#tools"
+          },
+          {
+            "label": "FAQ",
+            "href": "#faq"
+          }
+        ],
+        "navCtaLabel": "Get free access",
+        "navCtaHref": "#join",
+        "title": "Every workflow from our videos, step by step",
+        "text": "The prompts, templates and setup guides behind every Outskill breakdown, written out so you can build it yourself.",
+        "facts": [
+          {
+            "label": "Price",
+            "value": "Free forever"
+          },
+          {
+            "label": "New resources",
+            "value": "Every day"
+          }
+        ],
+        "ctaLabel": "Unlock the free library",
+        "ctaHref": "#join",
+        "mockTitle": "Workflow guide",
+        "mockBadge": "Free",
+        "mockSteps": [
+          {
+            "text": "Watch the breakdown"
+          },
+          {
+            "text": "Set up your tools"
+          },
+          {
+            "text": "Run the first prompt"
+          },
+          {
+            "text": "Ship your workflow"
+          }
+        ],
+        "mockPromptLabel": "Prompt",
+        "mockTools": [
+          {
+            "name": "ChatGPT",
+            "domain": "chatgpt.com",
+            "logo": ""
+          },
+          {
+            "name": "Claude",
+            "domain": "claude.ai",
+            "logo": ""
+          },
+          {
+            "name": "n8n",
+            "domain": "n8n.io",
+            "logo": ""
+          }
+        ],
+        "chips": [
+          {
+            "text": "Step-by-step workflows"
+          },
+          {
+            "text": "763 AI tools, priced"
+          },
+          {
+            "text": "New resources every day"
+          }
+        ],
+        "cards": [
+          {
+            "icon": "steps",
+            "label": "Step by step",
+            "title": "Every workflow, written out",
+            "kicker": "Inside every guide",
+            "text": "Watch the breakdown, then follow each step to build it yourself.",
+            "href": "#guide"
+          },
+          {
+            "icon": "copy",
+            "label": "Copy and paste",
+            "title": "Every prompt from the video",
+            "kicker": "Ready to use",
+            "text": "The exact prompts, commands and templates, one click to copy.",
+            "href": "#guide"
+          },
+          {
+            "icon": "tools",
+            "label": "Sorted and priced",
+            "title": "The right AI tool for the job",
+            "kicker": "AI tools directory",
+            "text": "What each tool does best, and what it costs.",
+            "href": "#tools"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tools-we-cover",
+      "type": "sc-logos",
+      "props": {
+        "tone": "light",
+        "title": "Workflows for the tools you already use",
+        "text": "Step-by-step guides for every AI tool we cover, sorted by what they do.",
+        "tools": [
+          {
+            "name": "ChatGPT",
+            "domain": "chatgpt.com",
+            "logo": ""
+          },
+          {
+            "name": "Claude",
+            "domain": "claude.ai",
+            "logo": ""
+          },
+          {
+            "name": "Gemini",
+            "domain": "gemini.google.com",
+            "logo": ""
+          },
+          {
+            "name": "ElevenLabs",
+            "domain": "elevenlabs.io",
+            "logo": ""
+          },
+          {
+            "name": "Midjourney",
+            "domain": "midjourney.com",
+            "logo": ""
+          },
+          {
+            "name": "Runway",
+            "domain": "runwayml.com",
+            "logo": ""
+          },
+          {
+            "name": "Cursor",
+            "domain": "cursor.com",
+            "logo": ""
+          },
+          {
+            "name": "n8n",
+            "domain": "n8n.io",
+            "logo": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": "library",
+      "type": "sc-library",
+      "props": {
+        "tone": "light",
+        "eyebrow": "The Library",
+        "title": "Watch the video. Build the workflow.",
+        "text": "Every guide comes from a real Outskill breakdown, with each step, prompt and tool you need to build it yourself.",
+        "buttonLabel": "Browse the library",
+        "buttonHref": "#join",
+        "lockLabel": "Free with sign-up",
+        "cards": [
+          {
+            "color": "crimson",
+            "icon": "code",
+            "category": "Vibe Coding",
+            "title": "Reverse-Engineer Any App with REA",
+            "summary": "REA is a free, open-source tool that runs locally and lets your coding agent study any app, break down how it works, and rebuild it.",
+            "href": "#join",
+            "videoUrl": "https://www.youtube.com/watch?v=v_XdN5-ya9A",
+            "duration": "16:12",
+            "steps": "5",
+            "prompts": "5",
+            "tools": "2",
+            "firstStep": "",
+            "secondStep": "",
+            "codeLabel": "Command (Mac): Install Claude Code",
+            "code": "curl -fsSL https://claude.ai/install.sh | bash"
+          },
+          {
+            "color": "violet",
+            "icon": "bolt",
+            "category": "AI Tools · 7 steps",
+            "title": "Run Your Coding Tool on Free and Cheap AI with OmniRoute",
+            "summary": "OmniRoute is a free local proxy that connects your coding tool to free and cheap AI models.",
+            "href": "#join",
+            "videoUrl": "https://www.youtube.com/watch?v=HsgsYdV1XoQ",
+            "duration": "31:34",
+            "steps": "7",
+            "prompts": "",
+            "tools": "",
+            "firstStep": "",
+            "secondStep": "",
+            "codeLabel": "",
+            "code": ""
+          },
+          {
+            "color": "green",
+            "icon": "target",
+            "category": "Career and Jobs · 6 steps",
+            "title": "Apply to 100 Jobs in One Night with ChatGPT",
+            "summary": "ChatGPT's agent mode finds jobs on LinkedIn and Indeed, tailors your resume and applies for you.",
+            "href": "#join",
+            "videoUrl": "",
+            "duration": "",
+            "steps": "6",
+            "prompts": "",
+            "tools": "",
+            "firstStep": "Load your resume and map roles",
+            "secondStep": "Build your master resume",
+            "codeLabel": "",
+            "code": ""
+          },
+          {
+            "color": "rose",
+            "icon": "users",
+            "category": "Marketing · 9 steps",
+            "title": "Test Your Launch on an AI Crowd with MiroFish",
+            "summary": "MiroFish builds a crowd of AI people, shows them your launch and tells you how they react.",
+            "href": "#join",
+            "videoUrl": "",
+            "duration": "",
+            "steps": "9",
+            "prompts": "",
+            "tools": "",
+            "firstStep": "Install MiroFish",
+            "secondStep": "Describe your audience",
+            "codeLabel": "",
+            "code": ""
+          },
+          {
+            "color": "amber",
+            "icon": "chart",
+            "category": "Sales · 6 steps",
+            "title": "Set Up a Free AI Sales Agent with Harvey",
+            "summary": "Harvey is a free, open-source AI agent that finds leads, writes outreach and books calls.",
+            "href": "#join",
+            "videoUrl": "",
+            "duration": "",
+            "steps": "6",
+            "prompts": "",
+            "tools": "",
+            "firstStep": "Install Harvey",
+            "secondStep": "Connect your inbox",
+            "codeLabel": "",
+            "code": ""
+          },
+          {
+            "color": "terracotta",
+            "icon": "heart",
+            "category": "Vibe Coding · 6 steps",
+            "title": "Build a Hospital Booking Site That Calls Patients",
+            "summary": "Build a hospital appointment website where every booking gets a confirmation call from an AI voice agent.",
+            "href": "#join",
+            "videoUrl": "",
+            "duration": "",
+            "steps": "6",
+            "prompts": "",
+            "tools": "",
+            "firstStep": "Plan the booking flow",
+            "secondStep": "Build the site",
+            "codeLabel": "",
+            "code": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": "videos",
+      "type": "sc-videos",
+      "props": {
+        "tone": "dark",
+        "eyebrow": "This week on Outskill · Most watched",
+        "title": "Top 5 videos of the week",
+        "text": "The breakdowns everyone’s watching this week, each with its full guide in the library.",
+        "subscribeLabel": "Subscribe on YouTube",
+        "subscribeUrl": "https://www.youtube.com/channel/UCNssyoLJiA2oB5xM7XjxmJA?sub_confirmation=1",
+        "badge": "#1 This Week",
+        "videos": [
+          {
+            "url": "https://www.youtube.com/watch?v=v_XdN5-ya9A",
+            "title": "How to Use REA GitHub to Reverse Engineer Anything in Claude Code",
+            "duration": "16:12",
+            "views": "329K views",
+            "note": "Guide inside"
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=cp41jdgFBDg",
+            "title": "I Built My Own Jarvis with Claude Code (No Code Setup)",
+            "duration": "19:19",
+            "views": "99K views",
+            "note": "Guide inside"
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=duT2ld4zWGE",
+            "title": "Build Your Own AI Employee That Replaces You at Work",
+            "duration": "21:24",
+            "views": "13K views",
+            "note": ""
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=HsgsYdV1XoQ",
+            "title": "Stop Paying for Claude Code (3 Ways to Actually Use It for Free)",
+            "duration": "31:34",
+            "views": "7.8K views",
+            "note": "Guide inside"
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=rcybc6fPioY",
+            "title": "Stop Using AI the Wrong Way (ChatGPT, Claude and Gemini)",
+            "duration": "24:01",
+            "views": "3.2K views",
+            "note": ""
+          }
+        ],
+        "shortsTitle": "The 60-second versions",
+        "shortsText": "Latest Shorts and reels from Outskill, for when you only have a minute.",
+        "shorts": [
+          {
+            "url": "https://www.youtube.com/shorts/ySeuS-WVVm0",
+            "image": "",
+            "title": "The secret to building a real AI assistant",
+            "meta": "0:54 · 17K views"
+          },
+          {
+            "url": "https://www.youtube.com/shorts/sHNskfRLyNY",
+            "image": "",
+            "title": "Stop writing bad prompts. Do this instead.",
+            "meta": "0:55 · 9.4K views"
+          },
+          {
+            "url": "https://www.youtube.com/shorts/qSjltjRBFmw",
+            "image": "",
+            "title": "Is this the end of paid AI APIs?",
+            "meta": "0:36 · 3.4K views"
+          },
+          {
+            "url": "https://www.youtube.com/shorts/hqVv2YJhB_E",
+            "image": "",
+            "title": "Turn any screenshot into a website",
+            "meta": "1:00 · 3.3K views"
+          },
+          {
+            "url": "https://www.youtube.com/shorts/HFG0QpZOVoc",
+            "image": "",
+            "title": "How to build your own AI billionaire council",
+            "meta": "0:59 · 2.9K views"
+          }
+        ]
+      }
+    },
+    {
+      "id": "guide",
+      "type": "sc-guide",
+      "props": {
+        "tone": "light",
+        "eyebrow": "Inside every guide",
+        "title": "See exactly what you’ll get",
+        "text": "Here’s a real guide from the library. The first steps are open. Sign up free to unlock the rest, and every other guide.",
+        "guideTitle": "Apply to 100 Jobs in One Night",
+        "openSteps": "2",
+        "steps": [
+          {
+            "title": "Before you start",
+            "body": "- A paid ChatGPT plan (Plus or higher). Agent mode isn’t on the free plan.\n- A LinkedIn account and an Indeed account, both logged in.\n- Your current resume as a file (PDF or Word).\n- 2 to 4 hours, since you stay nearby to clear CAPTCHAs.",
+            "promptLabel": "",
+            "prompt": ""
+          },
+          {
+            "title": "Load your resume and map roles",
+            "body": "This maps your resume to the job titles and keywords worth targeting.\n1. Open a new chat in ChatGPT.\n2. Upload your resume as an attachment.\n3. Paste the prompt below and press Enter.",
+            "promptLabel": "Prompt 1: Recruiter map",
+            "prompt": "Act as a senior recruiter. Read my resume and list the 10 job titles I am most likely to be hired for, with the keywords each one needs."
+          },
+          {
+            "title": "Build your master resume",
+            "body": "Turn your resume into a master version that can be tailored for any role in seconds.",
+            "promptLabel": "Prompt 2: Master resume",
+            "prompt": "Turn my resume into a master version I can tailor for any role in seconds."
+          },
+          {
+            "title": "Turn on agent mode",
+            "body": "",
+            "promptLabel": "",
+            "prompt": ""
+          },
+          {
+            "title": "Search and apply to jobs",
+            "body": "",
+            "promptLabel": "",
+            "prompt": ""
+          },
+          {
+            "title": "Make the interviews more likely",
+            "body": "",
+            "promptLabel": "",
+            "prompt": ""
+          }
+        ],
+        "unlockTitle": "Unlock the full guide, free",
+        "unlockText": "4 more steps, 3 more prompts, and every other workflow in the library.",
+        "unlockLabel": "Get free access",
+        "unlockHref": "#join",
+        "unlockNote": "Takes 30 seconds"
+      }
+    },
+    {
+      "id": "who",
+      "type": "sc-stages",
+      "props": {
+        "tone": "dark",
+        "eyebrow": "For every stage",
+        "title": "Who is the library for?",
+        "selected": "2",
+        "stages": [
+          {
+            "name": "Beginner",
+            "small": "New to AI tools",
+            "capTitle": "Never built a workflow",
+            "capText": "Run your first one, with every click written out."
+          },
+          {
+            "name": "Builder",
+            "small": "Using AI every week",
+            "capTitle": "Repeating the same work",
+            "capText": "Automate the tasks you do every week."
+          },
+          {
+            "name": "Pro",
+            "small": "Shipping with AI",
+            "capTitle": "Ready to build products",
+            "capText": "Ship AI tools, agents and products of your own."
+          }
+        ]
+      }
+    },
+    {
+      "id": "tools",
+      "type": "sc-tools",
+      "props": {
+        "tone": "light",
+        "eyebrow": "AI tools directory",
+        "title": "763 AI tools, sorted and priced",
+        "text": "Find the right tool for any job, with what it does and what it costs.",
+        "buttonLabel": "Open the directory",
+        "buttonHref": "#join",
+        "tools": [
+          {
+            "name": "ChatGPT",
+            "tag": "AI assistant",
+            "price": "Free plan",
+            "url": "https://chatgpt.com",
+            "domain": "chatgpt.com",
+            "logo": "",
+            "glow": "#10a37f"
+          },
+          {
+            "name": "Claude",
+            "tag": "AI assistant",
+            "price": "Free plan",
+            "url": "https://claude.ai",
+            "domain": "claude.ai",
+            "logo": "",
+            "glow": "#da7958"
+          },
+          {
+            "name": "Midjourney",
+            "tag": "Images from prompts",
+            "price": "Paid",
+            "url": "https://midjourney.com",
+            "domain": "midjourney.com",
+            "logo": "",
+            "glow": ""
+          },
+          {
+            "name": "ElevenLabs",
+            "tag": "AI voices",
+            "price": "Free plan",
+            "url": "https://elevenlabs.io",
+            "domain": "elevenlabs.io",
+            "logo": "",
+            "glow": ""
+          },
+          {
+            "name": "Runway",
+            "tag": "AI video",
+            "price": "Free plan",
+            "url": "https://runwayml.com",
+            "domain": "runwayml.com",
+            "logo": "",
+            "glow": ""
+          },
+          {
+            "name": "Cursor",
+            "tag": "AI code editor",
+            "price": "Free plan",
+            "url": "https://cursor.com",
+            "domain": "cursor.com",
+            "logo": "",
+            "glow": ""
+          },
+          {
+            "name": "Perplexity",
+            "tag": "Search with sources",
+            "price": "Free plan",
+            "url": "https://perplexity.ai",
+            "domain": "perplexity.ai",
+            "logo": "",
+            "glow": "#22bdd2"
+          },
+          {
+            "name": "n8n",
+            "tag": "Workflow automation",
+            "price": "Free plan",
+            "url": "https://n8n.io",
+            "domain": "n8n.io",
+            "logo": "",
+            "glow": "#f04d75"
+          },
+          {
+            "name": "HeyGen",
+            "tag": "AI avatars",
+            "price": "Free plan",
+            "url": "https://heygen.com",
+            "domain": "heygen.com",
+            "logo": "",
+            "glow": "#33d7bc"
+          },
+          {
+            "name": "Suno",
+            "tag": "Songs from prompts",
+            "price": "Free plan",
+            "url": "https://suno.com",
+            "domain": "suno.com",
+            "logo": "",
+            "glow": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": "apply",
+      "type": "lead-form",
+      "props": {
+        "layout": "showcase",
+        "eyebrow": "Free forever",
+        "title": "Stay ahead in the AI-first world",
+        "subtitle": "One sign-up unlocks every workflow, prompt and tool from Outskill’s videos, with new resources every day.",
+        "perks": [],
+        "stats": [
+          {
+            "value": "763",
+            "label": "AI Tools"
+          },
+          {
+            "value": "Daily",
+            "label": "New Resources"
+          },
+          {
+            "value": "Free",
+            "label": "Forever"
+          }
+        ],
+        "formTitle": "Unlock the library",
+        "submitLabel": "Get free access",
+        "whatsappConsent": "Email me when new guides go live",
+        "privacyNote": "No spam. Unsubscribe in one click.",
+        "successTitle": "You’re in!",
+        "successText": "The library is yours. We’ve also sent the link to your email and WhatsApp.",
+        "whatsappLabel": "Join the WhatsApp community"
+      }
+    },
+    {
+      "id": "faq",
+      "type": "sc-faq",
+      "props": {
+        "tone": "light",
+        "eyebrow": "Common questions",
+        "title": "Everything you’re\nwondering about",
+        "cardLabel": "On YouTube",
+        "cardTitle": "See every workflow built, live on screen",
+        "cardText": "Each guide starts as a full breakdown on the Outskill channel. Watch it, then follow along here.",
+        "cardButton": "Watch on YouTube",
+        "cardUrl": "https://www.youtube.com/channel/UCNssyoLJiA2oB5xM7XjxmJA?sub_confirmation=1",
+        "items": [
+          {
+            "question": "Is the library really free?",
+            "answer": "Yes. Every guide, prompt and template is free. You sign up once so we can send you new workflows as they go live."
+          },
+          {
+            "question": "What do I get after signing up?",
+            "answer": "Instant access to every workflow from Outskill’s videos, each written out step by step with copy-ready prompts, plus the directory of AI tools sorted by what they do and what they cost."
+          },
+          {
+            "question": "How often are new resources added?",
+            "answer": "Every day. New guides, prompts and workflows go live daily, including one for every new Outskill breakdown on YouTube."
+          },
+          {
+            "question": "Do I need to know how to code?",
+            "answer": "No. Most guides need no code at all, and the ones that do walk you through every command with a Copy button."
+          }
+        ]
+      }
+    },
+    {
+      "id": "footer",
+      "type": "sc-footer",
+      "props": {
+        "brand": "Outskill",
+        "youtubeUrl": "https://www.youtube.com/channel/UCNssyoLJiA2oB5xM7XjxmJA?sub_confirmation=1",
+        "instagramUrl": "",
+        "ctaTitle": "New resources every day",
+        "ctaText": "Every Outskill breakdown, written out step by step. Free forever.",
+        "ctaLabel": "Get free access",
+        "ctaHref": "#join",
+        "col1Title": "Library",
+        "col1": [
+          {
+            "label": "Workflows",
+            "href": "#library"
+          },
+          {
+            "label": "Top videos",
+            "href": "#videos"
+          },
+          {
+            "label": "AI tools directory",
+            "href": "#tools"
+          },
+          {
+            "label": "Questions",
+            "href": "#faq"
+          }
+        ],
+        "col2Title": "Outskill",
+        "col2": [
+          {
+            "label": "outskill.com",
+            "href": "https://www.outskill.com/"
+          },
+          {
+            "label": "YouTube channel",
+            "href": "https://www.youtube.com/channel/UCNssyoLJiA2oB5xM7XjxmJA"
+          }
+        ],
+        "bottomLeft": "© 2026 Outskill · Free AI workflow library",
+        "bottomRight": "Stay ahead in the AI-first world",
+        "bigWord": "Outskill"
+      }
+    },
+    {
+      "id": "bar",
+      "type": "sc-dock",
+      "props": {
+        "title": "The Outskill AI Library",
+        "text": "New resources every day · 763 AI tools",
+        "buttonLabel": "Get free access",
+        "buttonHref": "#join",
+        "note": "Free forever"
+      }
+    }
+  ]
+}

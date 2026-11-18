@@ -4,6 +4,8 @@ import { parseFormUrl } from '../../../../packages/attribution/src/formats.js';
 import { HttpError } from '../http/responses.js';
 
 const UTM_FIELDS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+/** The WebEngage event sent when an application completes; WebEngage journeys (e.g. the PDF email) trigger on this name. */
+export const APPLICATION_EVENT = 'Lead Form Submitted';
 const ANSWER_TEXT_MAX = 1000;
 
 /**
@@ -13,6 +15,8 @@ const ANSWER_TEXT_MAX = 1000;
  *   createLead    name + email + phone + campaign + UTMs      → lead token
  *   saveResponse  one question's answer (the last one is sent with IsFullySubmitted)
  *   complete      marks the application done                  → what the success screen shows
+ *                 then tells WebEngage (event APPLICATION_EVENT, matched by leadUUID) with the
+ *                 page's resource link, campaign and UTMs, for the follow-up email
  *
  * The page's Form URL decides which form and campaign everything goes to.
  * The browser never chooses the form: it is always read from the saved page.
@@ -24,12 +28,18 @@ export class LeadService {
    * @param {PageRepository} deps.pages
    * @param {() => string} [deps.newId]
    * @param {LeadValidator} [deps.validator]
+   * @param {string} [deps.publicBaseUrl]  where pages are shared (PUBLIC_BASE_URL); else the request's own address
+   * @param {(work: Promise) => Promise|void} [deps.later]  runs work after the response is sent (ctx.waitUntil); default: wait for it
+   * @param {() => Date} [deps.now]
    */
-  constructor({ api, pages, newId = () => crypto.randomUUID(), validator = new LeadValidator() }) {
+  constructor({ api, pages, newId = () => crypto.randomUUID(), validator = new LeadValidator(), publicBaseUrl = '', later = (work) => work, now = () => new Date() }) {
     this.api = api;
     this.pages = pages;
     this.newId = newId;
     this.validator = validator;
+    this.publicBaseUrl = String(publicBaseUrl || '').replace(/\/+$/, '');
+    this.later = later;
+    this.now = now;
   }
 
   /** The form's questions. Public and read-only, so the page can show them before anyone applies. */
@@ -83,15 +93,45 @@ export class LeadService {
   }
 
   /** Marks the application complete and returns what the success screen shows (the page's links and redirect). */
-  async complete(slug, body) {
-    const { page } = await this.#livePage(slug);
+  async complete(slug, body, origin = '') {
+    const { page, ids } = await this.#livePage(slug);
     // The redirect URL is set in the studio (Campaign tab); the backend's answer has none.
-    const result = { resources: (page.integrations?.resources || []).filter((r) => r.url), whatsappUrl: page.integrations?.whatsappCommunityUrl || '', redirectUrl: page.campaign.redirectUrl || '' };
+    const result = { resources: (page.integrations?.resources || []).filter((r) => r.url), whatsappUrl: realLink(page.integrations?.whatsappCommunityUrl), redirectUrl: page.campaign.redirectUrl || '' };
     if (!body.userJwt) return result;
     this.#assertWritable();
     if (!body.leadUUID) throw new HttpError(400, 'Body must include leadUUID');
     await this.#backend(() => this.api.completeApplication(body.leadUUID, body.userJwt), 'We could not finish your application. Please try again.');
+    await this.later(this.#tellWebEngage(page, ids, body, origin));
     return result;
+  }
+
+  /**
+   * The event WebEngage journeys use for follow-up comms. The application is
+   * already complete, so a failure here is logged and never shown to the visitor.
+   */
+  async #tellWebEngage(page, ids, body, origin) {
+    const base = this.publicBaseUrl || String(origin).replace(/\/+$/, '');
+    const pdf = page.integrations?.emailPdf;
+    const firstResource = (page.integrations?.resources || []).find((r) => r.url);
+    const eventData = {
+      // The emailed PDF's short link: it always opens the page's current PDF.
+      resource_url: pdf?.key ? `${base}/r/${page.slug}` : firstResource?.url || '',
+      resource_name: pdf?.name || firstResource?.label || '',
+      page_url: `${base}/${page.slug}`,
+      campaign: page.slug,
+      campaign_name: page.campaign.name || '',
+      format: page.campaign.format || '',
+      program_id: ids.programId,
+      form_id: ids.formId,
+      ...(ids.campaignId ? { campaign_id: ids.campaignId } : {}),
+      whatsapp_url: realLink(page.integrations?.whatsappCommunityUrl),
+      ...this.#utm(body.attribution, page.slug),
+    };
+    try {
+      await this.api.webengageEvent({ eventName: APPLICATION_EVENT, distinct_id: body.leadUUID, eventTime: this.now().toISOString(), eventData });
+    } catch (err) {
+      console.error('WebEngage event failed', err.status ?? '', err.message);
+    }
   }
 
   async #livePage(slug) {
@@ -143,4 +183,13 @@ function cleanAnswer(body) {
     ...(body.formsApplicationMetadataId != null ? { formsApplicationMetadataId: body.formsApplicationMetadataId } : {}),
     IsFullySubmitted: body.IsFullySubmitted === true,
   };
+}
+
+/**
+ * Templates ship with "…REPLACE_WITH_COMMUNITY_INVITE" until the editor pastes
+ * the real invite. Such a link is treated as not set: no button, and the
+ * thank-you screen does not send people to a broken invite.
+ */
+function realLink(url) {
+  return url && !/REPLACE_WITH/i.test(url) ? url : '';
 }

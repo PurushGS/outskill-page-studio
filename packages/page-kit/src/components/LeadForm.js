@@ -15,6 +15,12 @@ export class LeadForm extends Component {
   static type = 'lead-form';
   static label = 'Application form';
   static schema = [
+    {
+      key: 'layout',
+      label: 'Look',
+      kind: 'choice',
+      options: [{ value: 'classic', label: 'Classic (text beside the form)' }, { value: 'showcase', label: 'Showcase (green panel + white form card)' }],
+    },
     { key: 'eyebrow', label: 'Small label above title', kind: 'text' },
     { key: 'title', label: 'Title', kind: 'textarea' },
     { key: 'subtitle', label: 'Subtitle', kind: 'textarea' },
@@ -27,6 +33,15 @@ export class LeadForm extends Component {
         { key: 'text', label: 'Text', kind: 'text' },
       ],
     },
+    {
+      key: 'stats',
+      label: 'Numbers under the text (Showcase look)',
+      kind: 'list',
+      itemSchema: [
+        { key: 'value', label: 'Number, e.g. 763', kind: 'text' },
+        { key: 'label', label: 'Label, e.g. AI Tools', kind: 'text' },
+      ],
+    },
     { key: 'formTitle', label: 'Form title', kind: 'text' },
     { key: 'submitLabel', label: 'Submit button text', kind: 'text' },
     { key: 'whatsappConsent', label: 'WhatsApp consent text', kind: 'text' },
@@ -36,10 +51,12 @@ export class LeadForm extends Component {
     { key: 'whatsappLabel', label: '"Join WhatsApp" button text', kind: 'text' },
   ];
   static defaults = {
+    layout: 'classic',
     eyebrow: '',
     title: 'Get the free material',
     subtitle: '',
     perks: [],
+    stats: [],
     formTitle: 'Unlock it now',
     submitLabel: 'Send me the material',
     whatsappConsent: 'Send updates to my WhatsApp',
@@ -49,10 +66,33 @@ export class LeadForm extends Component {
     whatsappLabel: 'Join the WhatsApp community',
   };
 
+  /** The Showcase look uses the showcase blocks' stylesheet (see PageRenderer). */
+  get stylesheet() {
+    return this.#showcase ? 'showcase' : null;
+  }
+
+  get #showcase() {
+    return this.props.layout === 'showcase';
+  }
+
+  render() {
+    if (!this.#showcase) return super.render();
+    return html`<section class="pk-block ox ox--dark o-signup pk-${LeadForm.type}" id="${this.id}" data-block-id="${this.id}" data-block-type="${LeadForm.type}">${this.renderContent()}</section>`;
+  }
+
   renderContent() {
     const p = this.props;
-    const { slug, campaign = {} } = this.context.page;
-    const form = parseFormUrl(campaign.formUrl);
+    if (this.#showcase) {
+      return html`<div class="o-in"><div class="o-ctab">
+        <div class="o-csum">
+          ${p.eyebrow ? html`<p class="o-lbl lime"${this.editable('eyebrow')}>${p.eyebrow}</p>` : ''}
+          <h2 class="o-t2"${this.editable('title')}>${multiline(p.title)}</h2>
+          ${p.subtitle ? html`<p class="o-p"${this.editable('subtitle')}>${p.subtitle}</p>` : ''}
+          ${p.stats.length ? html`<ul class="o-stats">${p.stats.map((s, i) => html`<li><b${this.editable(`stats.${i}.value`)}>${s.value}</b><span${this.editable(`stats.${i}.label`)}>${s.label}</span></li>`)}</ul>` : ''}
+        </div>
+        <div class="o-join" id="join">${this.#panel()}</div>
+      </div></div>`;
+    }
     return html`<div class="pk-container pk-lead-form__layout" id="join">
       <div class="pk-lead-form__copy">
         ${eyebrow(p.eyebrow, this.editable('eyebrow'))}
@@ -60,7 +100,16 @@ export class LeadForm extends Component {
         ${p.subtitle ? html`<p class="pk-lead"${this.editable('subtitle')}>${p.subtitle}</p>` : ''}
         ${p.perks.length ? html`<ul class="pk-perks">${p.perks.map((perk, i) => html`<li><span${this.editable(`perks.${i}.icon`)}>${this.icon(perk.icon)}</span><span${this.editable(`perks.${i}.text`)}>${perk.text}</span></li>`)}</ul>` : ''}
       </div>
-      <div class="pk-panel">
+      ${this.#panel()}
+    </div>`;
+  }
+
+  /** The form and its success state; the same markup in both looks, so LeadFormController works unchanged. */
+  #panel() {
+    const p = this.props;
+    const { slug, campaign = {} } = this.context.page;
+    const form = parseFormUrl(campaign.formUrl);
+    return html`<div class="pk-panel">
         <form class="pk-form" id="application-form" data-lead-form data-slug="${slug}" data-form-url="${campaign.formUrl || ''}" data-form-id="${form?.formId ?? ''}" novalidate>
           <h3 class="pk-h3"${this.editable('formTitle')}>${p.formTitle}</h3>
           ${this.#field('name', html`<input id="${this.id}-name" name="name" autocomplete="name" placeholder="Full name">`, 'Full name')}
@@ -86,9 +135,9 @@ export class LeadForm extends Component {
           <p class="pk-muted"${this.editable('successText')}>${p.successText}</p>
           <div class="pk-success__links" data-resource-links></div>
           <a class="pk-btn pk-btn--whatsapp pk-btn--block" data-whatsapp-link href="#" target="_blank" rel="noopener">${this.icon('whatsapp')}${p.whatsappLabel}</a>
+          <p class="pk-muted pk-redirect-note" data-redirect-note aria-live="polite" hidden></p>
         </div>
-      </div>
-    </div>`;
+      </div>`;
   }
 
   #field(name, input, label) {

@@ -105,6 +105,7 @@ a.btn[aria-disabled] { pointer-events: none; opacity: .45; }
 .campaign-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
 .format-badge { padding: 4px 10px; border-radius: 99px; background: #eef2ff; color: #3730a3; font-weight: 700; font-size: 12px; }
 .page-link, .tracked-link { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.pdf-file { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; margin-bottom: 6px; word-break: break-all; }
 .page-link { display: block; font-size: 12px; color: var(--ink); background: #f3f4f6; padding: 6px 8px; border-radius: 6px; word-break: break-all; }
 .tracked-link { display: block; padding: 8px 10px; background: #f9fafb; border: 1px dashed var(--line); border-radius: 8px; font-size: 12px; word-break: break-all; }
 

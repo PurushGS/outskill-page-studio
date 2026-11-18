@@ -1,5 +1,6 @@
 import { createApp } from '../../apps/worker/src/app.js';
 import { FakeKv } from './FakeKv.js';
+import { FakeR2 } from './FakeR2.js';
 
 export const FORM_URL = 'https://applications.growthschool.io/5122/24542/19240';
 
@@ -23,9 +24,10 @@ export const QUESTION_FLOW = {
  * the Worker has no FORMS_API_TOKEN, i.e. applications are not connected.
  * `env` adds or overrides Worker settings.
  */
-export function createTestApp({ url = 'https://backend.test', token = 'backend-token', backendStatus = 200, completeBody = { leadUUID: 'x', easyInsights: {} }, env: extraEnv = {} } = {}) {
+export function createTestApp({ url = 'https://backend.test', token = 'backend-token', backendStatus = 200, completeBody = { leadUUID: 'x', easyInsights: {} }, webengageStatus = 200, env: extraEnv = {} } = {}) {
   const env = {
     PAGES: new FakeKv(),
+    FILES: new FakeR2(),
     ASSETS: { fetch: async () => new Response('<html>studio</html>') },
     STUDIO_TOKEN: 'test-token',
     ...(url ? { FORM_API_URL: url } : {}),
@@ -37,6 +39,7 @@ export function createTestApp({ url = 'https://backend.test', token = 'backend-t
     const { pathname, searchParams } = new URL(url);
     const call = { method: init.method, path: pathname, query: Object.fromEntries(searchParams), headers: init.headers, body: init.body ? JSON.parse(init.body) : undefined };
     received.push(call);
+    if (pathname === '/leads/webengage/external') return new Response(JSON.stringify(webengageStatus === 200 ? { message: 'Event fired' } : { message: 'eventTime is missing' }), { status: webengageStatus });
     if (backendStatus !== 200) return new Response(JSON.stringify({ message: 'backend says no' }), { status: backendStatus });
     const reply = (data) => new Response(JSON.stringify(data), { status: 200 });
     if (pathname.endsWith('/questionflow')) return reply(QUESTION_FLOW);

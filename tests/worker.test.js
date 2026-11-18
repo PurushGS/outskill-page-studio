@@ -105,6 +105,37 @@ test('under outskill.com/resources/: pages, their files, questions and applicati
   assert.equal((await request('GET', '/resourcesX')).status, 404, 'only the exact path prefix is removed');
 });
 
+test('the public domain shows pages and takes applications, but never the studio or the editing API', async () => {
+  // Pages are published on the app's address first, then visited on the public one (the test app is on pages.test).
+  const app = createTestApp();
+  const { body } = await createPage(app.request, { format: 'youtube', name: 'Live test' });
+  const pub = createTestApp({ env: { PUBLIC_BASE_URL: 'https://pages.test/p', PAGES: app.env.PAGES } });
+
+  assert.equal((await pub.request('GET', '/p/live-test')).status, 200);
+  assert.equal((await pub.request('GET', '/p/packages/page-kit/styles/page-kit.css')).status, 200);
+  assert.equal((await pub.request('GET', '/p/api/forms/24542/questionflow')).status, 200);
+  assert.equal((await pub.request('POST', '/p/api/leads', { body: submission(body.page) })).status, 201);
+  for (const path of ['/studio', '/p/studio', '/apps/studio/index.html', '/p/apps/studio/', '/api/pages', '/p/api/pages', '/p/api/config', '/templates/ai-shorts-hindi/page.json', '/p/api/templates/ai-shorts-hindi']) {
+    assert.equal((await pub.request('GET', path)).status, 404, path);
+  }
+  assert.equal((await pub.request('PUT', '/p/api/pages/live-test', { body: body.page, headers: auth })).status, 404, 'no editing on the public domain, even with the token');
+
+  assert.equal((await app.request('GET', '/apps/studio/index.html')).status, 200, 'the app\'s own address still serves the studio');
+});
+
+test('after applying, /<campaign>/<programId>/<formId>/<campaignId> opens the same page; other extra parts do not', async () => {
+  const { request, env } = createTestApp();
+  await createPage(request, { format: 'youtube', name: 'Ids test' });
+  for (const path of ['/ids-test/5122/24774', '/ids-test/5122/24774/', '/ids-test/5122/24774/2001']) {
+    assert.equal((await request('GET', path)).status, 200, path);
+  }
+  for (const path of ['/ids-test/5122', '/ids-test/abc/24774', '/ids-test/5122/24774/2001/9']) {
+    assert.equal((await request('GET', path)).status, 404, path);
+  }
+  const pub = createTestApp({ env: { PUBLIC_BASE_URL: 'https://pages.test', PAGES: env.PAGES } });
+  assert.equal((await pub.request('GET', '/ids-test/5122/24774/2001?utm_source=youtube')).status, 200, 'works on the public domain too');
+});
+
 test('creating needs the studio token, a campaign name and a form URL', async () => {
   const { request } = createTestApp();
   const draft = await draftFrom(request, { format: 'linkedin', name: '', formUrl: '' });
@@ -226,10 +257,11 @@ test('end to end: create page → questions → lead → answers → complete, a
 
   // 4. completing marks it done and returns the success screen content
   const done = await (await request('POST', '/api/leads/complete', { body: { slug: page.slug, leadUUID: lead.leadUUID, userJwt: lead.token } })).json();
-  assert.equal(received.at(-1).path, '/leads/application/completed');
-  assert.equal(received.at(-1).method, 'PATCH');
+  assert.equal(received.at(-2).path, '/leads/application/completed');
+  assert.equal(received.at(-2).method, 'PATCH');
+  assert.equal(received.at(-1).path, '/leads/webengage/external', 'then WebEngage hears about it');
   assert.deepEqual(done.resources, [{ label: 'Open the guide', url: 'https://example.com/guide' }]);
-  assert.match(done.whatsappUrl, /chat\.whatsapp\.com/);
+  assert.equal(done.whatsappUrl, '', 'the template\'s placeholder invite is not passed on');
   assert.equal(done.redirectUrl, 'https://next.example.com/thanks', 'the redirect is the one set on the Campaign tab, not the backend\'s');
 });
 
@@ -355,4 +387,170 @@ test('unknown routes and bad JSON get clean errors', async () => {
   const { request } = createTestApp();
   assert.equal((await request('DELETE', '/api/pages/x')).status, 404);
   assert.equal((await request('POST', '/api/leads', { rawBody: '{not json' })).status, 400);
+});
+
+const PDF = new TextEncoder().encode('%PDF-1.7\n1 0 obj << >> endobj\n%%EOF');
+const pdfHeaders = { ...auth, 'Content-Type': 'application/pdf' };
+
+async function uploadPdf(request, { slug = 'pdf-test', name = 'AI Jobs Guide (Nov).PDF', body = PDF, headers = pdfHeaders } = {}) {
+  const res = await request('POST', `/api/files?${new URLSearchParams({ slug, name })}`, { rawBody: body, headers });
+  return { res, body: await res.json().catch(() => ({})) };
+}
+
+test('a PDF uploaded in the studio is stored under the page with a clean name, and downloads as a PDF', async () => {
+  const { request, env } = createTestApp();
+  const { res, body } = await uploadPdf(request);
+  assert.equal(res.status, 201);
+  assert.match(body.file.key, /^pdfs\/pdf-test\/\d{8}-\d{6}-ai-jobs-guide-nov\.pdf$/);
+  assert.equal(body.file.name, 'ai-jobs-guide-nov.pdf');
+  assert.equal(body.file.size, PDF.length);
+  assert.deepEqual(env.FILES.keys(), [body.file.key]);
+
+  const download = await request('GET', `/files/${body.file.key}`);
+  assert.equal(download.status, 200);
+  assert.equal(download.headers.get('Content-Type'), 'application/pdf');
+  assert.equal(download.headers.get('Content-Disposition'), 'attachment; filename="ai-jobs-guide-nov.pdf"');
+  assert.match(download.headers.get('Cache-Control'), /immutable/);
+  assert.deepEqual(new Uint8Array(await download.arrayBuffer()), PDF);
+
+  assert.equal((await request('GET', '/files/pdfs/pdf-test/nope.pdf')).status, 404);
+  assert.equal((await request('GET', '/files/../wrangler.jsonc')).status, 404);
+});
+
+test('uploads need the studio token, a real PDF and at most 25 MB; drafts go under "draft"', async () => {
+  const { request } = createTestApp();
+  assert.equal((await uploadPdf(request, { headers: { 'Content-Type': 'application/pdf' } })).res.status, 401);
+  assert.equal((await uploadPdf(request, { name: 'evil.pdf', body: new TextEncoder().encode('<html>not a pdf</html>') })).res.status, 415);
+  assert.equal((await uploadPdf(request, { body: new Uint8Array(0) })).res.status, 400);
+  assert.equal((await uploadPdf(request, { headers: { ...pdfHeaders, 'Content-Length': String(26 * 1024 * 1024) } })).res.status, 413);
+  assert.match((await uploadPdf(request, { slug: '', name: '' })).body.file.key, /^pdfs\/draft\/\d{8}-\d{6}-file\.pdf$/);
+
+  const noBucket = createTestApp({ env: { FILES: undefined } });
+  assert.equal((await uploadPdf(noBucket.request)).res.status, 503);
+});
+
+test('/r/<campaign> sends people to the page\'s current PDF; no PDF, no page or unpublished gives a not-found page', async () => {
+  const { request } = createTestApp();
+  const { body } = await createPage(request, { format: 'youtube', name: 'Pdf test' });
+  const page = body.page;
+  assert.equal((await request('GET', '/r/pdf-test')).status, 404, 'no PDF yet');
+
+  const first = (await uploadPdf(request)).body.file;
+  await request('PUT', '/api/pages/pdf-test', { body: { ...page, integrations: { ...page.integrations, emailPdf: first } }, headers: auth });
+  let res = await request('GET', '/r/pdf-test');
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.get('Location'), `https://pages.test/files/${first.key}`);
+  assert.equal(res.headers.get('Cache-Control'), 'no-store');
+
+  const second = (await uploadPdf(request, { name: 'v2.pdf' })).body.file;
+  await request('PUT', '/api/pages/pdf-test', { body: { ...page, integrations: { ...page.integrations, emailPdf: second } }, headers: auth });
+  res = await request('GET', '/r/pdf-test');
+  assert.equal(res.headers.get('Location'), `https://pages.test/files/${second.key}`, 'Replace changes where the same link goes');
+
+  await request('POST', '/api/pages/pdf-test/unpublish', { headers: auth });
+  assert.equal((await request('GET', '/r/pdf-test')).status, 404, 'unpublished');
+  assert.equal((await request('GET', '/r/no-such-page')).status, 404);
+});
+
+test('a page only accepts an emailed PDF uploaded in the studio', async () => {
+  const { request } = createTestApp();
+  const { body } = await createPage(request, { format: 'youtube', name: 'Pdf rules' });
+  const res = await request('PUT', '/api/pages/pdf-rules', { body: { ...body.page, integrations: { ...body.page.integrations, emailPdf: { key: 'https://evil.example/x.pdf', name: 'x.pdf' } } }, headers: auth });
+  assert.equal(res.status, 422);
+  assert.ok((await res.json()).details.some((e) => /Upload PDF/.test(e)));
+});
+
+test('on the public domain the PDF links work, but uploading does not; "r" and "files" cannot be campaign links', async () => {
+  const app = createTestApp();
+  const { body } = await createPage(app.request, { format: 'youtube', name: 'Public pdf' });
+  const file = (await uploadPdf(app.request, { slug: 'public-pdf' })).body.file;
+  await app.request('PUT', '/api/pages/public-pdf', { body: { ...body.page, integrations: { ...body.page.integrations, emailPdf: file } }, headers: auth });
+
+  const pub = createTestApp({ env: { PUBLIC_BASE_URL: 'https://pages.test/p', PAGES: app.env.PAGES, FILES: app.env.FILES } });
+  const res = await pub.request('GET', '/p/r/public-pdf');
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.get('Location'), `https://pages.test/p/files/${file.key}`, 'the redirect stays under the public path');
+  assert.equal((await pub.request('GET', `/p/files/${file.key}`)).status, 200);
+  assert.equal((await uploadPdf(pub.request, { slug: 'public-pdf' })).res.status, 404);
+
+  for (const name of ['R', 'Files']) {
+    assert.equal((await createPage(app.request, { format: 'youtube', name })).res.status, 409, name);
+  }
+});
+
+test('a template\'s placeholder WhatsApp link is never sent to visitors (no button, no countdown)', async () => {
+  const { request } = createTestApp();
+  const { body } = await createPage(request, { format: 'youtube', name: 'Placeholder wa' });
+  const page = body.page;
+  const complete = async () => (await request('POST', '/api/leads/complete', { body: { slug: page.slug } })).json();
+
+  await request('PUT', `/api/pages/${page.slug}`, { body: { ...page, integrations: { ...page.integrations, whatsappCommunityUrl: 'https://chat.whatsapp.com/REPLACE_WITH_COMMUNITY_INVITE' } }, headers: auth });
+  assert.equal((await complete()).whatsappUrl, '');
+  await request('PUT', `/api/pages/${page.slug}`, { body: { ...page, integrations: { ...page.integrations, whatsappCommunityUrl: 'https://chat.whatsapp.com/AbC123xyz' } }, headers: auth });
+  assert.equal((await complete()).whatsappUrl, 'https://chat.whatsapp.com/AbC123xyz');
+});
+
+async function appliedThrough(app, { pdf = true, attribution } = {}) {
+  const { request } = app;
+  const { body } = await createPage(request, { format: 'youtube', name: 'Webengage test' });
+  let page = body.page;
+  if (pdf) {
+    const file = (await uploadPdf(request, { slug: page.slug, name: 'AI Jobs Guide.pdf' })).body.file;
+    page = (await (await request('PUT', `/api/pages/${page.slug}`, { body: { ...page, integrations: { ...page.integrations, emailPdf: file } }, headers: auth })).json()).page;
+  }
+  const lead = await (await request('POST', '/api/leads', { body: submission(page) })).json();
+  const done = await request('POST', '/api/leads/complete', { body: { slug: page.slug, leadUUID: lead.leadUUID, userJwt: lead.token, attribution: attribution ?? submission(page).attribution } });
+  return { page, lead, done };
+}
+
+test('a completed application tells WebEngage, matched by leadUUID, with the PDF link, campaign and UTMs', async () => {
+  const app = createTestApp({ env: { PUBLIC_BASE_URL: 'https://outskill.live' } });
+  const { lead, done } = await appliedThrough(app);
+  assert.equal(done.status, 200);
+
+  const call = app.received.find((c) => c.path === '/leads/webengage/external');
+  assert.ok(call, 'the event was sent');
+  assert.equal(call.method, 'POST');
+  assert.equal(call.headers.Authorization, undefined, 'the endpoint takes no token');
+  assert.equal(call.body.eventName, 'Lead Form Submitted');
+  assert.equal(call.body.distinct_id, lead.leadUUID);
+  assert.ok(!Number.isNaN(Date.parse(call.body.eventTime)));
+  assert.deepEqual(call.body.eventData, {
+    resource_url: 'https://outskill.live/r/webengage-test',
+    resource_name: 'ai-jobs-guide.pdf',
+    page_url: 'https://outskill.live/webengage-test',
+    campaign: 'webengage-test',
+    campaign_name: 'Webengage test',
+    format: 'youtube',
+    program_id: 5122,
+    form_id: 24542,
+    campaign_id: 19240,
+    whatsapp_url: '',
+    utm_source: 'instagram',
+    utm_medium: 'story',
+    utm_campaign: 'webengage-test/ai-jobs-ig-nov',
+    utm_content: 'story-nov-20',
+  });
+});
+
+test('without an emailed PDF the first resource link is sent; links use the request address when PUBLIC_BASE_URL is unset', async () => {
+  const app = createTestApp();
+  await appliedThrough(app, { pdf: false, attribution: {} });
+  const data = app.received.find((c) => c.path === '/leads/webengage/external').body.eventData;
+  assert.equal(data.resource_url, 'https://outskill-ai-resources.tool-od.workers.dev/#r001');
+  assert.equal(data.resource_name, 'Open the full guide');
+  assert.equal(data.page_url, 'https://pages.test/webengage-test');
+  assert.equal(data.utm_campaign, 'webengage-test');
+});
+
+test('if WebEngage fails, the application still succeeds; bots and unfinished leads send nothing', async () => {
+  const app = createTestApp({ webengageStatus: 400 });
+  const { done } = await appliedThrough(app);
+  assert.equal(done.status, 200);
+  assert.ok(app.received.some((c) => c.path === '/leads/webengage/external'));
+
+  const quiet = createTestApp();
+  const { body } = await createPage(quiet.request, { format: 'youtube', name: 'Bot test' });
+  await quiet.request('POST', '/api/leads/complete', { body: { slug: body.page.slug } });
+  assert.ok(!quiet.received.some((c) => c.path === '/leads/webengage/external'), 'no lead token: nothing created, nothing sent');
 });

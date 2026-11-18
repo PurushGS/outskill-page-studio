@@ -68,14 +68,21 @@ export class StudioApi {
     return this.#request('POST', `/api/pages/${slug}/unpublish`);
   }
 
+  /** Stores a PDF for the page to send by email; returns { file: { key, name, size, uploadedAt } }. */
+  uploadPdf(slug, file) {
+    const query = new URLSearchParams({ slug: slug || '', name: file.name });
+    return this.#request('POST', `/api/files?${query}`, file);
+  }
+
   async #request(method, path, body) {
+    const isFile = body instanceof Blob;
     const response = await fetch(path, {
       method,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': isFile ? 'application/pdf' : 'application/json',
         Authorization: `Bearer ${this.sessionToken || this.token}`,
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFile ? body : body ? JSON.stringify(body) : undefined,
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {

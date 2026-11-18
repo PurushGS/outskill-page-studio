@@ -7,18 +7,28 @@
 
   // Static files (studio UI, page-kit CSS/JS) are served straight from the repo.
   // .assetsignore keeps server code, tests and secrets out of the public bundle.
-  "assets": { "directory": ".", "binding": "ASSETS" },
+  // Studio files go through the Worker first, so the public domain can refuse them (app.js isPublicHost).
+  "assets": { "directory": ".", "binding": "ASSETS", "run_worker_first": ["/apps/*", "/templates/*"] },
 
   // Page designs saved from the studio. Created by `npm run setup`.
   "kv_namespaces": [
     { "binding": "PAGES", "id": "ff7f831692f34c7f971be5018ae4674e" }
-  ]
+  ],
 
-  // Public address: pages at https://outskill.com/<path>/<campaign-name> (see README "Public domain").
-  //   "vars": { "PUBLIC_BASE_URL": "https://outskill.com/resources" },
-  // and, only if outskill.com is a zone on this Cloudflare account:
-  //   "routes": [{ "pattern": "outskill.com/resources/*", "zone_name": "outskill.com" }],
-  // PUBLIC_BASE_URL makes pages load their files under that path and the studio show and copy those links.
+  // PDFs uploaded in the studio and sent by email (apps/worker/src/files/PdfStore.js).
+  // Created once with `npx wrangler r2 bucket create outskill-page-files`.
+  "r2_buckets": [
+    { "binding": "FILES", "bucket_name": "outskill-page-files" }
+  ],
+
+  // Public address: pages at https://outskill.live/<campaign-name> (see README "Public domain").
+  // On that domain only pages, their form and emailed PDFs are served; the studio stays on workers.dev.
+  // (For pages under a path only: PUBLIC_BASE_URL "https://outskill.live/p" and the route "outskill.live/p/*" with "zone_name".)
+  "vars": { "PUBLIC_BASE_URL": "https://outskill.live" },
+  "routes": [{ "pattern": "outskill.live", "custom_domain": true }],
+  // Kept on: the studio lives at outskill-page-studio.engineering-279.workers.dev/studio.
+  // (`wrangler dev` would present local requests as outskill.live because of this route; `npm run dev` keeps them on localhost.)
+  "workers_dev": true
 
   // Applications go to the application backend (apps/worker/src/leads/FormsApiClient.js).
   // Both come from the environment only (no defaults in the code):

@@ -10,7 +10,11 @@ import { html, raw, escapeHtml } from './html.js';
  *   static defaults starting props for a freshly added block
  * and implements renderContent().
  *
- * Schema field kinds: text | textarea | url | icon | list (list has `itemSchema`).
+ * Schema field kinds: text | textarea | url | icon | choice (has `options`:
+ * [{ value, label }]) | list (has `itemSchema`).
+ *
+ * Optional: static stylesheet / static script name an extra file under
+ * styles/<name>.css and src/client/<name>.js that pages using the block load.
  */
 export class Component {
   static type = 'component';

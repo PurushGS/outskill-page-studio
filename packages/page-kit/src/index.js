@@ -18,6 +18,16 @@ import { ToolStrip } from './components/ToolStrip.js';
 import { GuideLibrary } from './components/GuideLibrary.js';
 import { TopVideos } from './components/TopVideos.js';
 import { ShortsRow } from './components/ShortsRow.js';
+import { ShowcaseHero } from './components/showcase/ShowcaseHero.js';
+import { LogoBand } from './components/showcase/LogoBand.js';
+import { WorkflowCards } from './components/showcase/WorkflowCards.js';
+import { VideoSpotlight } from './components/showcase/VideoSpotlight.js';
+import { GuidePreview } from './components/showcase/GuidePreview.js';
+import { AudienceStages } from './components/showcase/AudienceStages.js';
+import { ToolTiles } from './components/showcase/ToolTiles.js';
+import { ShowcaseFaq } from './components/showcase/ShowcaseFaq.js';
+import { ShowcaseFooter } from './components/showcase/ShowcaseFooter.js';
+import { StickyBar } from './components/showcase/StickyBar.js';
 
 export { Component } from './core/Component.js';
 export { ComponentRegistry } from './core/ComponentRegistry.js';
@@ -28,6 +38,7 @@ export { Theme, DEFAULT_THEME, FONT_CHOICES, COLOR_TOKENS } from './theme/Theme.
 export { IconLibrary } from './icons/IconLibrary.js';
 export { youtubeId, youtubeThumbnail } from './core/media.js';
 export { Header, Hero, FeatureGrid, LeadForm, Faq, Footer, GuideHero, Checklist, ToolStrip, GuideLibrary, TopVideos, ShortsRow };
+export { ShowcaseHero, LogoBand, WorkflowCards, VideoSpotlight, GuidePreview, AudienceStages, ToolTiles, ShowcaseFaq, ShowcaseFooter, StickyBar };
 
 export function createDefaultRegistry() {
   return new ComponentRegistry()
@@ -42,5 +53,16 @@ export function createDefaultRegistry() {
     .register(FeatureGrid)
     .register(LeadForm)
     .register(Faq)
-    .register(Footer);
+    .register(Footer)
+    // The showcase family: the Outskill library look (styles/showcase.css).
+    .register(ShowcaseHero)
+    .register(LogoBand)
+    .register(WorkflowCards)
+    .register(VideoSpotlight)
+    .register(GuidePreview)
+    .register(AudienceStages)
+    .register(ToolTiles)
+    .register(ShowcaseFaq)
+    .register(ShowcaseFooter)
+    .register(StickyBar);
 }

@@ -1,4 +1,4 @@
-import { htmlResponse, json, readJson } from '../http/responses.js';
+import { htmlResponse, json, messageHtml, readJson } from '../http/responses.js';
 
 /** Public page rendering plus the studio's endpoints for page JSON. */
 export class PageController {
@@ -50,9 +50,4 @@ export class PageController {
 
 function cleanSlug(slug) {
   return slug.replace(/[^a-z0-9-]/gi, '');
-}
-
-/** Callers pass fixed text; only cleanSlug() output is interpolated. */
-function messageHtml(title, text) {
-  return `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><body style="font-family:system-ui;padding:40px;text-align:center"><h1>${title}</h1><p>${text}</p></body>`;
 }

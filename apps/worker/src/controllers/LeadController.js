@@ -19,7 +19,8 @@ export class LeadController {
 
   saveResponse = async (request) => json(await this.leadService.saveResponse(...await this.#slugAnd(request)));
 
-  complete = async (request) => json(await this.leadService.complete(...await this.#slugAnd(request)));
+  // The request's own address is the fallback for links sent to WebEngage when PUBLIC_BASE_URL is not set.
+  complete = async (request) => json(await this.leadService.complete(...await this.#slugAnd(request), new URL(request.url).origin));
 
   async #slugAnd(request) {
     const body = await this.#body(request);

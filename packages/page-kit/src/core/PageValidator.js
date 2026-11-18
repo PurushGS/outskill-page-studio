@@ -23,6 +23,9 @@ export class PageValidator {
     if (!page.meta?.title) errors.push('Page needs a meta.title (shown in the browser tab and on WhatsApp previews)');
     errors.push(...this.#campaignErrors(page.campaign));
     errors.push(...this.#resourceErrors(page.integrations?.resources));
+    if (page.integrations?.emailPdf && !/^pdfs\/[a-z0-9./_-]+\.pdf$/.test(page.integrations.emailPdf.key || '')) {
+      errors.push('The emailed PDF must be uploaded in the studio (Upload PDF)');
+    }
 
     try {
       new Theme(page.theme);
