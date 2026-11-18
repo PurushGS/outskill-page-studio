@@ -14,6 +14,12 @@
     { "binding": "PAGES", "id": "ff7f831692f34c7f971be5018ae4674e" }
   ]
 
+  // Public address: pages at https://outskill.com/<path>/<campaign-name> (see README "Public domain").
+  //   "vars": { "PUBLIC_BASE_URL": "https://outskill.com/resources" },
+  // and, only if outskill.com is a zone on this Cloudflare account:
+  //   "routes": [{ "pattern": "outskill.com/resources/*", "zone_name": "outskill.com" }],
+  // PUBLIC_BASE_URL makes pages load their files under that path and the studio show and copy those links.
+
   // Applications go to the application backend (apps/worker/src/leads/FormsApiClient.js).
   // Both come from the environment only (no defaults in the code):
   //   FORM_API_URL     the backend address: a Worker variable (dashboard, or "vars" below) or `npx wrangler secret put FORM_API_URL`

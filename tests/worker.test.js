@@ -67,6 +67,44 @@ test('the page link is made from the campaign name and can be claimed once', asy
   assert.equal(pages.find((p) => p.slug === 'ai-jobs-ig').campaignName, 'AI Jobs · IG');
 });
 
+test('campaign names that would take the site\'s own paths are refused', async () => {
+  const { request } = createTestApp();
+  for (const name of ['Studio', 'API', 'Apps!']) {
+    const { res, body } = await createPage(request, { format: 'youtube', name });
+    assert.equal(res.status, 409, name);
+    assert.match(body.error, /more specific campaign name/);
+  }
+  assert.equal((await createPage(request, { format: 'youtube', name: 'Studio tips Dec' })).res.status, 201, 'names that only start with a reserved word are fine');
+});
+
+test('the studio learns the public address for links: PUBLIC_BASE_URL, else its own', async () => {
+  assert.deepEqual(await (await createTestApp().request('GET', '/api/config')).json(), { publicBaseUrl: 'https://pages.test' });
+  const { request } = createTestApp({ env: { PUBLIC_BASE_URL: 'https://outskill.com/resources/' } });
+  assert.deepEqual(await (await request('GET', '/api/config')).json(), { publicBaseUrl: 'https://outskill.com/resources' });
+});
+
+test('under outskill.com/resources/: pages, their files, questions and applications work with or without the path', async () => {
+  const { request, env, received } = createTestApp({ env: { PUBLIC_BASE_URL: 'https://outskill.com/resources' } });
+  const assetPaths = [];
+  env.ASSETS.fetch = async (url) => { assetPaths.push(new URL(url).pathname); return new Response('/* css */'); };
+  const { body } = await createPage(request, { format: 'youtube', name: 'Resources test' });
+  const page = body.page;
+
+  for (const path of ['/resources/resources-test', '/resources-test']) {
+    const res = await request('GET', path);
+    assert.equal(res.status, 200, path);
+    const html = await res.text();
+    assert.match(html, /href="\/resources\/packages\/page-kit\/styles\/page-kit\.css"/, 'CSS is loaded under the path');
+    assert.match(html, /"apiBase":"\/resources"/, 'the form calls the Worker under the path');
+  }
+  assert.equal((await request('GET', '/resources/packages/page-kit/styles/page-kit.css')).status, 200);
+  assert.deepEqual(assetPaths, ['/packages/page-kit/styles/page-kit.css'], 'the path is removed before reading the file');
+  assert.equal((await request('GET', '/resources/api/forms/24542/questionflow')).status, 200);
+  assert.equal((await request('POST', '/resources/api/leads', { body: submission(page) })).status, 201);
+  assert.ok(received.some((call) => call.path === '/leads'), 'the lead reached the forms backend');
+  assert.equal((await request('GET', '/resourcesX')).status, 404, 'only the exact path prefix is removed');
+});
+
 test('creating needs the studio token, a campaign name and a form URL', async () => {
   const { request } = createTestApp();
   const draft = await draftFrom(request, { format: 'linkedin', name: '', formUrl: '' });

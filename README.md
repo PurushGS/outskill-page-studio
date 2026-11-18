@@ -141,7 +141,14 @@ Who does what:
 
 **Automatic deploys.** Push the repo to GitHub and add two repository secrets: `CLOUDFLARE_API_TOKEN` (create it with the "Edit Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID`. Then `.github/workflows/deploy.yml` tests and deploys every push to `main`.
 
-**Custom domain (optional).** Cloudflare dashboard → Workers → outskill-page-studio → Settings → Domains & Routes → add e.g. `learn.outskill.com`. Old `workers.dev` links keep working.
+**Public domain (`outskill.com/<path>/`).** Pages are shared as `https://outskill.com/<path>/<campaign-name>`. The studio stays on `workers.dev`. Pick the path (e.g. `resources`), then:
+1. Set `PUBLIC_BASE_URL` to `https://outskill.com/<path>` in `wrangler.jsonc` (`vars`). Pages then load their files and send applications under that path, and the studio shows and copies those links.
+2. Send `outskill.com/<path>/*` to the Worker, whichever applies:
+   - **outskill.com is on this Cloudflare account:** uncomment the `routes` line in `wrangler.jsonc`. A route only takes that path; the rest of outskill.com is untouched.
+   - **outskill.com is hosted elsewhere** (e.g. Vercel, Webflow, Netlify): add a rewrite/reverse proxy on that host from `/<path>/:rest*` to `https://outskill-page-studio.engineering-279.workers.dev/<path>/:rest*`. The Worker accepts requests with or without the path. Have the proxy forward the visitor's country (e.g. a header), because `request.cf` geo would otherwise be the proxy's location.
+3. Push to `main`. Old `workers.dev` links keep working.
+
+Campaign names that would take the site's own paths (`studio`, `api`, `apps`, …) are refused; see `RESERVED_SLUGS` in `PageService.js`.
 
 **New editor or leaked link?** Delete `.studio-token` and `.studio-link`, then run `npm run setup` again. It sets a new password (the old link stops working) and writes a fresh link.
 

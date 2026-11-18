@@ -25,11 +25,13 @@ export class CampaignPanel extends Panel {
    * @param {PageStore} store
    * @param {object} deps
    * @param {StudioApi} deps.api
+   * @param {string} deps.publicBaseUrl  where pages are shared, e.g. https://outskill.com/resources
    * @param {(message: string, tone?: string, link?: string) => void} deps.onStatus
    */
-  constructor(store, { api, onStatus }) {
+  constructor(store, { api, publicBaseUrl, onStatus }) {
     super(store);
     this.api = api;
+    this.publicBaseUrl = publicBaseUrl;
     this.onStatus = onStatus;
     this.fields = new FieldEditor(store, null);
   }
@@ -62,7 +64,7 @@ export class CampaignPanel extends Panel {
     const draft = this.store.isDraft;
 
     const pageLink = el('code', { class: 'page-link' });
-    const showLink = (value) => { pageLink.textContent = `${location.host}/${value || '…'}`; };
+    const showLink = (value) => { pageLink.textContent = `${this.publicBaseUrl.replace(/^https?:\/\//, '')}/${value || '…'}`; };
     showLink(slug);
 
     const formIds = el('small', { class: 'hint' });
@@ -148,7 +150,7 @@ export class CampaignPanel extends Panel {
     const { slug, campaign } = this.store.page;
     const output = el('code', { class: 'tracked-link' });
     const update = (content) => {
-      output.textContent = buildTrackedLink({ baseUrl: location.origin, slug, format, campaignId: campaign.id, content });
+      output.textContent = buildTrackedLink({ baseUrl: this.publicBaseUrl, slug, format, campaignId: campaign.id, content });
     };
     const content = el('input', { class: 'input', placeholder: 'e.g. jobs-video-1 or story-nov-20', oninput: (e) => update(e.target.value) });
     update('');

@@ -45,6 +45,7 @@ test('tracked links carry the format defaults, campaign and post', () => {
   const link = buildTrackedLink({ baseUrl: 'https://go.example', slug: 'ai-jobs', format: findFormat('instagram'), campaignId: 'ai-jobs-nov', content: 'Story Nov 20' });
   assert.equal(link, 'https://go.example/ai-jobs?utm_source=instagram&utm_medium=bio_link&utm_campaign=ai-jobs-nov&utm_content=story-nov-20');
   assert.equal(slugify('AI Jobs · Nov 2026!'), 'ai-jobs-nov-2026');
+  assert.match(buildTrackedLink({ baseUrl: 'https://outskill.com/resources/', slug: 'ai-jobs', format: findFormat('youtube'), campaignId: 'c' }), /^https:\/\/outskill\.com\/resources\/ai-jobs\?utm_source=youtube/, 'a base path is kept');
   assert.doesNotMatch(slugify(`${'a'.repeat(59)} b`), /-$/, 'trimming to 60 characters never leaves a trailing dash');
 });
 

@@ -21,14 +21,16 @@ export const QUESTION_FLOW = {
  * Builds the real Worker app with in-memory KV and a fake forms backend that
  * records every call it receives (and can be told to fail). With `token: null`
  * the Worker has no FORMS_API_TOKEN, i.e. applications are not connected.
+ * `env` adds or overrides Worker settings.
  */
-export function createTestApp({ url = 'https://backend.test', token = 'backend-token', backendStatus = 200, completeBody = { leadUUID: 'x', easyInsights: {} } } = {}) {
+export function createTestApp({ url = 'https://backend.test', token = 'backend-token', backendStatus = 200, completeBody = { leadUUID: 'x', easyInsights: {} }, env: extraEnv = {} } = {}) {
   const env = {
     PAGES: new FakeKv(),
     ASSETS: { fetch: async () => new Response('<html>studio</html>') },
     STUDIO_TOKEN: 'test-token',
     ...(url ? { FORM_API_URL: url } : {}),
     ...(token ? { FORMS_API_TOKEN: token } : {}),
+    ...extraEnv,
   };
   const received = [];
   globalThis.fetch = async (url, init = {}) => {

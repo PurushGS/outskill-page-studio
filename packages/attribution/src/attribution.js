@@ -59,7 +59,8 @@ export function resolveSource(params = {}, referrer = '') {
  * sign-up is attributed to this campaign and (optionally) this exact post.
  */
 export function buildTrackedLink({ baseUrl, slug, format, campaignId, content = '' }) {
-  const url = new URL(`/${slug}`, baseUrl);
+  // Joined as text so a base with a path (https://outskill.com/resources) keeps it.
+  const url = new URL(`${baseUrl.replace(/\/+$/, '')}/${slug}`);
   url.searchParams.set('utm_source', format.utmSource);
   url.searchParams.set('utm_medium', format.utmMedium);
   url.searchParams.set('utm_campaign', campaignId);

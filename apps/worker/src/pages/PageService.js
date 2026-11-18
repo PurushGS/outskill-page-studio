@@ -2,6 +2,9 @@ import { findFormat } from '../../../../packages/attribution/src/formats.js';
 import { slugify } from '../../../../packages/attribution/src/attribution.js';
 import { HttpError } from '../http/responses.js';
 
+/** Paths the app itself uses, so no campaign can take them as its page link. */
+export const RESERVED_SLUGS = new Set(['studio', 'api', 'apps', 'packages', 'templates', 'admin', 'login', 'favicon-ico', 'robots-txt']);
+
 /**
  * Rules for creating and updating pages, kept out of the HTTP layer:
  *   - the page link (slug) is made from the campaign name when the page is
@@ -25,6 +28,9 @@ export class PageService {
     const slug = slugify(name);
     if (name && !slug) {
       throw new HttpError(422, 'Page is not valid', ['Campaign name needs some English letters or numbers: the page link is made from them']);
+    }
+    if (RESERVED_SLUGS.has(slug)) {
+      throw new HttpError(409, `"${name}" would make the link /${slug}, which the site itself uses. Use a more specific campaign name.`);
     }
     if (slug && await this.pages.exists(slug)) {
       throw new HttpError(409, `A page with the link /${slug} already exists. Use a different campaign name (e.g. add the month or channel).`);

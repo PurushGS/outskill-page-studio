@@ -22,11 +22,13 @@ export class StudioApp {
    * @param {PageRenderer} deps.renderer
    * @param {ComponentRegistry} deps.registry
    * @param {IconLibrary} deps.icons
+   * @param {string} deps.publicBaseUrl  where pages are shared, e.g. https://outskill.com/resources
    */
-  constructor({ root, store, api, renderer, registry, icons }) {
+  constructor({ root, store, api, renderer, registry, icons, publicBaseUrl }) {
     this.root = root;
     this.store = store;
     this.api = api;
+    this.publicBaseUrl = publicBaseUrl;
     this.pages = [];
     this.format = '';
     /** The open page was taken off the web; Publish brings it back. */
@@ -38,7 +40,7 @@ export class StudioApp {
     this.panels = {
       content: new BlocksPanel(store, { registry, icons, onSelect: (id) => this.preview.highlight(id) }),
       style: new ThemePanel(store),
-      campaign: new CampaignPanel(store, { api, onStatus: (...args) => this.#setStatus(...args) }),
+      campaign: new CampaignPanel(store, { api, publicBaseUrl, onStatus: (...args) => this.#setStatus(...args) }),
     };
     this.ui = {
       formatSelect: root.querySelector('#format-select'),
@@ -202,7 +204,7 @@ export class StudioApp {
     this.store.addEventListener('dirty', () => this.#updatePublishControls());
     this.store.addEventListener('structure', () => {
       const { slug } = this.store.page;
-      this.ui.liveLink.href = `/${slug}`;
+      this.ui.liveLink.href = this.#pageLink(slug);
       this.ui.liveLink.toggleAttribute('aria-disabled', this.store.isDraft);
       this.ui.copyLink.disabled = this.store.isDraft;
       this.#updatePublishControls();
@@ -264,9 +266,9 @@ export class StudioApp {
     }
   }
 
-  /** The plain page address: origin + slug, no UTMs. */
+  /** The plain public page address, no UTMs. */
   #pageLink(slug) {
-    return `${location.origin}/${slug}`;
+    return `${this.publicBaseUrl}/${slug}`;
   }
 
   async #copyPageLink() {

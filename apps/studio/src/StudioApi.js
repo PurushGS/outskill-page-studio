@@ -32,6 +32,11 @@ export class StudioApi {
     history.replaceState(null, '', location.pathname + location.search);
   }
 
+  /** { publicBaseUrl }: the address pages are shared on, e.g. https://outskill.com/resources */
+  getConfig() {
+    return this.#request('GET', '/api/config');
+  }
+
   listPages() {
     return this.#request('GET', '/api/pages').then((body) => body.pages);
   }
