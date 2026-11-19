@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { LeadValidator, QuestionFlow } from '../packages/lead-flow/src/index.js';
+import { HttpLeadTransport } from '../packages/lead-flow/src/LeadTransport.js';
 import { validLead, QUESTION_FLOW } from './helpers/testApp.js';
 
 const validator = new LeadValidator();
@@ -66,4 +67,42 @@ test('the studio lists every question once: standard, all follow-ups, then the a
   });
   assert.deepEqual(flow.all().map((q) => q.id), [101, 102, 103, 104, 106]);
   assert.deepEqual(new QuestionFlow({}).all(), []);
+});
+
+test('answers become readable fields for WebEngage: the question title as a key, the answer as text', () => {
+  const flow = new QuestionFlow(QUESTION_FLOW);
+  const [standard] = flow.visible(null);
+  assert.deepEqual(QuestionFlow.fieldFor(standard, '1'), ['what_describes_you_best', 'Professional']);
+  const text = flow.all().find((q) => q.id === 104);
+  assert.deepEqual(QuestionFlow.fieldFor(text, '  I want to switch careers '), ['why_do_you_want_to_join', 'I want to switch careers']);
+  assert.equal(QuestionFlow.fieldFor(text, '   '), null);
+  assert.equal(QuestionFlow.fieldFor(standard, '99'), null, 'an option that does not exist is no answer');
+});
+
+test('the WebEngage event goes straight to the backend; if that is blocked or fails, it goes through our relay; it never throws', async () => {
+  const event = { eventName: 'Lead Form Submitted', distinct_id: 'id', eventTime: 't', eventData: {} };
+  const run = async (behaviour) => {
+    const calls = [];
+    const fetchImpl = async (url, init) => {
+      calls.push({ url, body: JSON.parse(init.body), keepalive: init.keepalive });
+      const outcome = behaviour(url);
+      if (outcome === 'throw') throw new TypeError('Failed to fetch');
+      return new Response('{}', { status: outcome });
+    };
+    const how = await new HttpLeadTransport({ apiBase: 'https://outskill.live', slug: 'p', fetchImpl }).webengageEvent('https://backend.test/leads/webengage/external', event);
+    return { how, calls };
+  };
+
+  const direct = await run(() => 200);
+  assert.equal(direct.how, 'direct');
+  assert.equal(direct.calls.length, 1);
+  assert.equal(direct.calls[0].keepalive, true);
+
+  const blocked = await run((url) => (url.includes('backend.test') ? 'throw' : 200));
+  assert.equal(blocked.how, 'relay');
+  assert.equal(blocked.calls[1].url, 'https://outskill.live/api/leads/notify');
+  assert.deepEqual(blocked.calls[1].body, { slug: 'p', ...event });
+
+  assert.equal((await run((url) => (url.includes('backend.test') ? 500 : 200))).how, 'relay');
+  assert.equal((await run(() => 'throw')).how, 'failed');
 });

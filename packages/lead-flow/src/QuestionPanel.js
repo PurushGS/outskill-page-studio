@@ -37,6 +37,13 @@ export class QuestionPanel {
       .filter(Boolean);
   }
 
+  /** Every visible answer as { snake_case_question_title: answer text }, for the WebEngage event. */
+  fields() {
+    return Object.fromEntries(this.flow.visible(this.standardOptionId)
+      .map((question) => QuestionFlow.fieldFor(question, this.values.get(question.id)))
+      .filter(Boolean));
+  }
+
   render() {
     this.host.replaceChildren(...this.flow.visible(this.standardOptionId).map((question) => this.#field(question)));
   }

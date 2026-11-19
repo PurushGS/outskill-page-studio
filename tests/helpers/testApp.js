@@ -24,7 +24,7 @@ export const QUESTION_FLOW = {
  * the Worker has no FORMS_API_TOKEN, i.e. applications are not connected.
  * `env` adds or overrides Worker settings.
  */
-export function createTestApp({ url = 'https://backend.test', token = 'backend-token', backendStatus = 200, completeBody = { leadUUID: 'x', easyInsights: {} }, webengageStatus = 200, env: extraEnv = {} } = {}) {
+export function createTestApp({ url = 'https://backend.test', token = 'backend-token', backendStatus = 200, completeBody = { leadUUID: 'x', easyInsights: {} }, webengageFailures = 0, env: extraEnv = {} } = {}) {
   const env = {
     PAGES: new FakeKv(),
     FILES: new FakeR2(),
@@ -39,7 +39,11 @@ export function createTestApp({ url = 'https://backend.test', token = 'backend-t
     const { pathname, searchParams } = new URL(url);
     const call = { method: init.method, path: pathname, query: Object.fromEntries(searchParams), headers: init.headers, body: init.body ? JSON.parse(init.body) : undefined };
     received.push(call);
-    if (pathname === '/leads/webengage/external') return new Response(JSON.stringify(webengageStatus === 200 ? { message: 'Event fired' } : { message: 'eventTime is missing' }), { status: webengageStatus });
+    if (pathname === '/leads/webengage/external') {
+      // The first `webengageFailures` calls fail, like a backend blip.
+      if (webengageFailures-- > 0) return new Response(JSON.stringify({ message: 'try again' }), { status: 502 });
+      return new Response(JSON.stringify({ message: 'Event fired' }), { status: 200 });
+    }
     if (backendStatus !== 200) return new Response(JSON.stringify({ message: 'backend says no' }), { status: backendStatus });
     const reply = (data) => new Response(JSON.stringify(data), { status: 200 });
     if (pathname.endsWith('/questionflow')) return reply(QUESTION_FLOW);

@@ -1,7 +1,7 @@
 import { createApp } from './app.js';
 
 export default {
-  fetch(request, env, ctx) {
-    return createApp(env, ctx).handle(request);
+  fetch(request, env) {
+    return createApp(env).handle(request);
   },
 };

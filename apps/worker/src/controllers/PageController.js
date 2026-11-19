@@ -10,7 +10,8 @@ export class PageController {
   }
 
   renderPage = async (_request, { slug }) => {
-    const page = await this.pages.find(slug);
+    // Templates open in the studio as starting designs; only published pages are on the web.
+    const page = await this.pages.findSaved(slug);
     if (!page) return htmlResponse(messageHtml('Page not found', `No page called “${cleanSlug(slug)}”.`), { status: 404, headers: { 'Cache-Control': 'no-store' } });
     if (page.unpublished) {
       return htmlResponse(messageHtml('This page is no longer available', 'The campaign has ended. Check the latest video or post for a new link.'), { status: 404, headers: { 'Cache-Control': 'no-store' } });

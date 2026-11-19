@@ -6,7 +6,9 @@
  *   POST  /leads?formId=                                   create the lead → { token }
  *   POST  /leads/form/responses?formId=&leadUUID=          one answer (last one: IsFullySubmitted: true)
  *   PATCH /leads/application/completed?leadUUID=           mark the application complete (returns no redirect URL)
- *   POST  /leads/webengage/external                        a custom WebEngage event for the lead (distinct_id = leadUUID)
+ *
+ * WebEngage events go to POST /leads/webengage/external (no token needed). The
+ * page sends them from the browser; webengageEvent() is the fallback when it can't.
  *
  * The address (FORM_API_URL) and the bearer token (FORMS_API_TOKEN) come from the
  * Worker's environment only; nothing is hardcoded or defaulted. They live only here, on the server.
@@ -54,11 +56,12 @@ export class FormsApiClient {
     return this.#call('PATCH', `/leads/application/completed?leadUUID=${encodeURIComponent(leadUUID)}`, { auth: true, userToken });
   }
 
-  /**
-   * Fires a custom WebEngage event through the backend, which matches the
-   * WebEngage user by leadUUID. No token: the endpoint is open, like the questions.
-   * @param {{ eventName: string, distinct_id: string, eventTime: string, eventData: object }} event
-   */
+  /** Where the browser sends custom WebEngage events (the backend matches the user by leadUUID). */
+  get webengageUrl() {
+    return this.baseUrl ? `${this.baseUrl}/leads/webengage/external` : '';
+  }
+
+  /** The same event sent from here, when the browser could not reach the backend itself. */
   webengageEvent(event) {
     return this.#call('POST', '/leads/webengage/external', { body: event });
   }

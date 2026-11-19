@@ -7,6 +7,8 @@ const UTM_FIELDS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', '
 /** The WebEngage event sent when an application completes; WebEngage journeys (e.g. the PDF email) trigger on this name. */
 export const APPLICATION_EVENT = 'Lead Form Submitted';
 const ANSWER_TEXT_MAX = 1000;
+const EVENT_DATA_MAX = 10000;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * An application is three steps against the forms backend, the same as the
@@ -14,9 +16,11 @@ const ANSWER_TEXT_MAX = 1000;
  *
  *   createLead    name + email + phone + campaign + UTMs      → lead token
  *   saveResponse  one question's answer (the last one is sent with IsFullySubmitted)
- *   complete      marks the application done                  → what the success screen shows
- *                 then tells WebEngage (event APPLICATION_EVENT, matched by leadUUID) with the
- *                 page's resource link, campaign and UTMs, for the follow-up email
+ *   complete      marks the application done                  → what the success screen shows,
+ *                 plus the WebEngage event (APPLICATION_EVENT) with the page's part filled in:
+ *                 resource link, campaign, form ids and UTMs. The browser adds the form's
+ *                 details and fires it at the backend's /leads/webengage/external itself,
+ *                 with distinct_id = leadUUID (so it shows in the browser's Network tab)
  *
  * The page's Form URL decides which form and campaign everything goes to.
  * The browser never chooses the form: it is always read from the saved page.
@@ -29,17 +33,13 @@ export class LeadService {
    * @param {() => string} [deps.newId]
    * @param {LeadValidator} [deps.validator]
    * @param {string} [deps.publicBaseUrl]  where pages are shared (PUBLIC_BASE_URL); else the request's own address
-   * @param {(work: Promise) => Promise|void} [deps.later]  runs work after the response is sent (ctx.waitUntil); default: wait for it
-   * @param {() => Date} [deps.now]
    */
-  constructor({ api, pages, newId = () => crypto.randomUUID(), validator = new LeadValidator(), publicBaseUrl = '', later = (work) => work, now = () => new Date() }) {
+  constructor({ api, pages, newId = () => crypto.randomUUID(), validator = new LeadValidator(), publicBaseUrl = '' }) {
     this.api = api;
     this.pages = pages;
     this.newId = newId;
     this.validator = validator;
     this.publicBaseUrl = String(publicBaseUrl || '').replace(/\/+$/, '');
-    this.later = later;
-    this.now = now;
   }
 
   /** The form's questions. Public and read-only, so the page can show them before anyone applies. */
@@ -101,15 +101,15 @@ export class LeadService {
     this.#assertWritable();
     if (!body.leadUUID) throw new HttpError(400, 'Body must include leadUUID');
     await this.#backend(() => this.api.completeApplication(body.leadUUID, body.userJwt), 'We could not finish your application. Please try again.');
-    await this.later(this.#tellWebEngage(page, ids, body, origin));
-    return result;
+    return { ...result, webengage: this.#webengageEvent(page, ids, body, origin) };
   }
 
   /**
-   * The event WebEngage journeys use for follow-up comms. The application is
-   * already complete, so a failure here is logged and never shown to the visitor.
+   * The event WebEngage journeys use for follow-up comms, with what only the
+   * server knows. The browser adds the form's details (name, email, phone,
+   * answers) and sends it, so a failure there never affects the application.
    */
-  async #tellWebEngage(page, ids, body, origin) {
+  #webengageEvent(page, ids, body, origin) {
     const base = this.publicBaseUrl || String(origin).replace(/\/+$/, '');
     const pdf = page.integrations?.emailPdf;
     const firstResource = (page.integrations?.resources || []).find((r) => r.url);
@@ -127,10 +127,29 @@ export class LeadService {
       whatsapp_url: realLink(page.integrations?.whatsappCommunityUrl),
       ...this.#utm(body.attribution, page.slug),
     };
-    try {
-      await this.api.webengageEvent({ eventName: APPLICATION_EVENT, distinct_id: body.leadUUID, eventTime: this.now().toISOString(), eventData });
-    } catch (err) {
-      console.error('WebEngage event failed', err.status ?? '', err.message);
+    return { url: this.api.webengageUrl, eventName: APPLICATION_EVENT, eventData };
+  }
+
+  /**
+   * Fallback for the WebEngage event: the browser sends it here when its own
+   * call to the backend failed or was blocked (ad blockers often block
+   * "webengage" addresses). Only the application event, for a lead on a live
+   * page, is forwarded, and it is tried twice.
+   */
+  async notify(slug, body) {
+    await this.#livePage(slug);
+    if (body.eventName !== APPLICATION_EVENT) throw new HttpError(400, `Only the "${APPLICATION_EVENT}" event is accepted`);
+    if (!UUID.test(String(body.distinct_id || ''))) throw new HttpError(400, 'distinct_id must be the leadUUID');
+    if (!body.eventData || typeof body.eventData !== 'object' || JSON.stringify(body.eventData).length > EVENT_DATA_MAX) throw new HttpError(400, 'eventData must be an object of at most 10 KB');
+    const event = { eventName: body.eventName, distinct_id: body.distinct_id, eventTime: validTime(body.eventTime), eventData: body.eventData };
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await this.api.webengageEvent(event);
+        return { ok: true };
+      } catch (err) {
+        console.error('WebEngage event failed', attempt, err.status ?? '', err.message);
+        if (attempt === 2) throw new HttpError(503, 'Could not send the event');
+      }
     }
   }
 
@@ -192,4 +211,10 @@ function cleanAnswer(body) {
  */
 function realLink(url) {
   return url && !/REPLACE_WITH/i.test(url) ? url : '';
+}
+
+/** The browser's event time if it is a real date, else now. */
+function validTime(value) {
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? new Date().toISOString() : new Date(time).toISOString();
 }

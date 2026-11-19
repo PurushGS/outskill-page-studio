@@ -16,8 +16,7 @@ import { PdfStore } from './files/PdfStore.js';
  * Composition root: the only place that knows how the pieces are wired.
  * Everything else receives its collaborators through its constructor.
  */
-/** @param {ExecutionContext} [ctx]  lets work (the WebEngage event) finish after the response is sent */
-export function createApp(env, ctx) {
+export function createApp(env) {
   const basePath = publicBasePath(env);
   const registry = createDefaultRegistry();
   const auth = new StudioAuth(env.STUDIO_TOKEN);
@@ -31,7 +30,7 @@ export function createApp(env, ctx) {
     auth,
   });
   const forms = new FormsApiClient({ baseUrl: env.FORM_API_URL, token: env.FORMS_API_TOKEN });
-  const leadService = new LeadService({ api: forms, pages, publicBaseUrl: env.PUBLIC_BASE_URL, later: ctx ? (work) => ctx.waitUntil(work) : undefined });
+  const leadService = new LeadService({ api: forms, pages, publicBaseUrl: env.PUBLIC_BASE_URL });
   const leadController = new LeadController({ leadService });
   const fileController = new FileController({ files: new PdfStore(env.FILES), pages, auth, basePath });
 
@@ -48,6 +47,7 @@ export function createApp(env, ctx) {
     .post('/api/leads', leadController.create)
     .post('/api/leads/response', leadController.saveResponse)
     .post('/api/leads/complete', leadController.complete)
+    .post('/api/leads/notify', leadController.notify)
     .post('/api/files', fileController.upload)
     .get('/files/:key(pdfs/.+)', fileController.download)
     .get('/r/:slug', fileController.shortLink)
@@ -86,7 +86,7 @@ export function createApp(env, ctx) {
  * What the public domain serves: a page (/<campaign>, or /<campaign>/<programId>/<formId>/<campaignId?>), its CSS/JS,
  * the application form's calls, and the emailed PDF (/r/<campaign> and /files/…). Everything else there is "not found".
  */
-const PUBLIC_PATHS = /^\/(?:(?!studio\/?$)[a-z0-9-]+(?:\/\d+){0,3}\/?|packages\/.+|files\/pdfs\/.+|r\/[a-z0-9-]+\/?|api\/forms\/[^/]+\/questionflow|api\/leads(?:\/response|\/complete)?)$/;
+const PUBLIC_PATHS = /^\/(?:(?!studio\/?$)[a-z0-9-]+(?:\/\d+){0,3}\/?|packages\/.+|files\/pdfs\/.+|r\/[a-z0-9-]+\/?|api\/forms\/[^/]+\/questionflow|api\/leads(?:\/response|\/complete|\/notify)?)$/;
 
 function isPublicHost(env, url) {
   return Boolean(env.PUBLIC_BASE_URL) && new URL(env.PUBLIC_BASE_URL).host === url.host;

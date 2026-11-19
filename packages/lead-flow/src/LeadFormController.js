@@ -97,8 +97,9 @@ export class LeadFormController {
       const last = this.held ?? this.questions?.answers().at(-1);
       if (last) await this.#sendAnswer(last, true);
 
-      // The visit's UTMs go along so the WebEngage event (sent by the server) carries them.
+      // The visit's UTMs go along so the server can put them in the WebEngage event.
       const result = await this.transport.complete({ leadUUID: this.lead.leadUUID, userJwt: this.lead.token, attribution: this.attribution.collect() });
+      this.#tellWebEngage(result.webengage, lead);
       this.tracker.identify(lead.email, { email: lead.email, name: lead.name, phone: lead.phone });
       this.tracker.track(TrackingEvents.LEAD_SUBMITTED, { leadId: this.lead.leadUUID, formUrl: this.form.dataset.formUrl });
       this.#showApplied();
@@ -109,6 +110,32 @@ export class LeadFormController {
     } finally {
       this.#setBusy(false);
     }
+  }
+
+  /**
+   * The WebEngage event (named by the server, e.g. "Lead Form Submitted"),
+   * sent from here so it shows in the browser's Network tab. distinct_id is
+   * the leadUUID (repeated in eventData as leadUUID); eventData is the server's part
+   * (resource link, campaign, form ids, UTMs) plus what was filled in: name, email,
+   * phone and answers.
+   * Not awaited: the success screen never waits for it.
+   */
+  #tellWebEngage(webengage, lead) {
+    if (!webengage?.url || !webengage.eventName) return;
+    this.transport.webengageEvent(webengage.url, {
+      eventName: webengage.eventName,
+      distinct_id: this.lead.leadUUID,
+      eventTime: new Date().toISOString(),
+      eventData: {
+        ...webengage.eventData,
+        leadUUID: this.lead.leadUUID,
+        first_name: lead.name.split(/\s+/)[0],
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        ...this.questions?.fields(),
+      },
+    });
   }
 
   // ---------- questions ----------

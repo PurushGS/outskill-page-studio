@@ -32,16 +32,21 @@ function submission(page, extra = {}) {
   };
 }
 
-test('renders the screenshot template by slug with every block, 404 for unknown slugs', async () => {
+test('a page made from a template renders every block; templates themselves and unknown slugs are not on the web', async () => {
   const { request } = createTestApp();
-  const res = await request('GET', `/${TEMPLATE}`);
+  assert.equal((await request('GET', `/${TEMPLATE}`)).status, 404, 'templates are starting designs, not pages');
+  assert.equal((await request('GET', '/workflow-library')).status, 404);
+  assert.equal((await request('GET', `/api/templates/${TEMPLATE}`)).status, 200, 'the studio still opens them');
+
+  await createPage(request, { format: 'youtube', name: 'From template' });
+  const res = await request('GET', '/from-template');
   assert.equal(res.status, 200);
   const html = await res.text();
   for (const type of ['guide-hero', 'checklist', 'tool-strip', 'guide-library', 'top-videos', 'shorts-row', 'lead-form']) {
     assert.match(html, new RegExp(`data-block-type="${type}"`), `${type} missing`);
   }
   assert.match(html, /i\.ytimg\.com\/vi\/v_XdN5-ya9A\/hqdefault\.jpg/, 'YouTube thumbnails come from the image CDN');
-  assert.ok(html.includes('data-form-url="https://applications.growthschool.io/PROGRAM_ID/FORM_ID/CAMPAIGN_ID" data-form-id=""'), 'a template with no real form link has no form id');
+  assert.ok(html.includes('data-form-id="24542"'), 'the published page carries its real form');
   assert.equal((await request('GET', '/no-such-page')).status, 404);
 });
 
@@ -257,9 +262,8 @@ test('end to end: create page → questions → lead → answers → complete, a
 
   // 4. completing marks it done and returns the success screen content
   const done = await (await request('POST', '/api/leads/complete', { body: { slug: page.slug, leadUUID: lead.leadUUID, userJwt: lead.token } })).json();
-  assert.equal(received.at(-2).path, '/leads/application/completed');
-  assert.equal(received.at(-2).method, 'PATCH');
-  assert.equal(received.at(-1).path, '/leads/webengage/external', 'then WebEngage hears about it');
+  assert.equal(received.at(-1).path, '/leads/application/completed');
+  assert.equal(received.at(-1).method, 'PATCH');
   assert.deepEqual(done.resources, [{ label: 'Open the guide', url: 'https://example.com/guide' }]);
   assert.equal(done.whatsappUrl, '', 'the template\'s placeholder invite is not passed on');
   assert.equal(done.redirectUrl, 'https://next.example.com/thanks', 'the redirect is the one set on the Campaign tab, not the backend\'s');
@@ -500,22 +504,17 @@ async function appliedThrough(app, { pdf = true, attribution } = {}) {
   }
   const lead = await (await request('POST', '/api/leads', { body: submission(page) })).json();
   const done = await request('POST', '/api/leads/complete', { body: { slug: page.slug, leadUUID: lead.leadUUID, userJwt: lead.token, attribution: attribution ?? submission(page).attribution } });
-  return { page, lead, done };
+  return { page, lead, done, body: await done.json() };
 }
 
-test('a completed application tells WebEngage, matched by leadUUID, with the PDF link, campaign and UTMs', async () => {
+test('completing returns the WebEngage event for the browser to send: the backend address, the event name and the page part of its data', async () => {
   const app = createTestApp({ env: { PUBLIC_BASE_URL: 'https://outskill.live' } });
-  const { lead, done } = await appliedThrough(app);
+  const { done, body } = await appliedThrough(app);
   assert.equal(done.status, 200);
-
-  const call = app.received.find((c) => c.path === '/leads/webengage/external');
-  assert.ok(call, 'the event was sent');
-  assert.equal(call.method, 'POST');
-  assert.equal(call.headers.Authorization, undefined, 'the endpoint takes no token');
-  assert.equal(call.body.eventName, 'Lead Form Submitted');
-  assert.equal(call.body.distinct_id, lead.leadUUID);
-  assert.ok(!Number.isNaN(Date.parse(call.body.eventTime)));
-  assert.deepEqual(call.body.eventData, {
+  assert.ok(!app.received.some((c) => c.path === '/leads/webengage/external'), 'the server does not send it; the browser does');
+  assert.equal(body.webengage.url, 'https://backend.test/leads/webengage/external');
+  assert.equal(body.webengage.eventName, 'Lead Form Submitted');
+  assert.deepEqual(body.webengage.eventData, {
     resource_url: 'https://outskill.live/r/webengage-test',
     resource_name: 'ai-jobs-guide.pdf',
     page_url: 'https://outskill.live/webengage-test',
@@ -533,24 +532,52 @@ test('a completed application tells WebEngage, matched by leadUUID, with the PDF
   });
 });
 
-test('without an emailed PDF the first resource link is sent; links use the request address when PUBLIC_BASE_URL is unset', async () => {
-  const app = createTestApp();
-  await appliedThrough(app, { pdf: false, attribution: {} });
-  const data = app.received.find((c) => c.path === '/leads/webengage/external').body.eventData;
+test('without an emailed PDF the first resource link is used; links use the request address when PUBLIC_BASE_URL is unset', async () => {
+  const { body } = await appliedThrough(createTestApp(), { pdf: false, attribution: {} });
+  const data = body.webengage.eventData;
   assert.equal(data.resource_url, 'https://outskill-ai-resources.tool-od.workers.dev/#r001');
   assert.equal(data.resource_name, 'Open the full guide');
   assert.equal(data.page_url, 'https://pages.test/webengage-test');
   assert.equal(data.utm_campaign, 'webengage-test');
 });
 
-test('if WebEngage fails, the application still succeeds; bots and unfinished leads send nothing', async () => {
-  const app = createTestApp({ webengageStatus: 400 });
-  const { done } = await appliedThrough(app);
-  assert.equal(done.status, 200);
-  assert.ok(app.received.some((c) => c.path === '/leads/webengage/external'));
+test('bots and unfinished leads get no WebEngage event', async () => {
+  const app = createTestApp();
+  const { body } = await createPage(app.request, { format: 'youtube', name: 'Bot test' });
+  const done = await (await app.request('POST', '/api/leads/complete', { body: { slug: body.page.slug } })).json();
+  assert.equal(done.webengage, undefined);
+});
 
-  const quiet = createTestApp();
-  const { body } = await createPage(quiet.request, { format: 'youtube', name: 'Bot test' });
-  await quiet.request('POST', '/api/leads/complete', { body: { slug: body.page.slug } });
-  assert.ok(!quiet.received.some((c) => c.path === '/leads/webengage/external'), 'no lead token: nothing created, nothing sent');
+function relayEvent(page, overrides = {}) {
+  return { slug: page.slug, eventName: 'Lead Form Submitted', distinct_id: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', eventTime: '2026-11-19T09:06:42.743Z', eventData: { leadUUID: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', email: 'a@b.co' }, ...overrides };
+}
+
+test('relay: when the browser cannot reach the backend, /api/leads/notify forwards the event, retrying once', async () => {
+  const app = createTestApp({ webengageFailures: 1 });
+  const { body } = await createPage(app.request, { format: 'youtube', name: 'Relay test' });
+  const res = await app.request('POST', '/api/leads/notify', { body: relayEvent(body.page) });
+  assert.equal(res.status, 200);
+  const calls = app.received.filter((c) => c.path === '/leads/webengage/external');
+  assert.equal(calls.length, 2, 'failed once, then sent');
+  assert.deepEqual(calls[1].body, { eventName: 'Lead Form Submitted', distinct_id: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', eventTime: '2026-11-19T09:06:42.743Z', eventData: { leadUUID: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', email: 'a@b.co' } });
+  assert.equal(calls[1].headers.Authorization, undefined);
+
+  const down = createTestApp({ webengageFailures: 5, env: { PAGES: app.env.PAGES } });
+  assert.equal((await down.request('POST', '/api/leads/notify', { body: relayEvent(body.page) })).status, 503);
+});
+
+test('relay only forwards the application event for a lead on a live page', async () => {
+  const app = createTestApp();
+  const { body } = await createPage(app.request, { format: 'youtube', name: 'Relay rules' });
+  const page = body.page;
+  const status = async (event) => (await app.request('POST', '/api/leads/notify', { body: event })).status;
+  assert.equal(await status(relayEvent(page, { eventName: 'Something Else' })), 400);
+  assert.equal(await status(relayEvent(page, { distinct_id: 'not-a-uuid' })), 400);
+  assert.equal(await status(relayEvent(page, { eventData: 'text' })), 400);
+  assert.equal(await status(relayEvent(page, { eventData: { big: 'x'.repeat(20000) } })), 400);
+  assert.equal(await status(relayEvent(page, { slug: 'no-such-page' })), 404);
+  assert.ok(!app.received.some((c) => c.path === '/leads/webengage/external'));
+
+  const pub = createTestApp({ env: { PUBLIC_BASE_URL: 'https://pages.test', PAGES: app.env.PAGES } });
+  assert.equal((await pub.request('POST', '/api/leads/notify', { body: relayEvent(page) })).status, 200, 'works on the public domain');
 });

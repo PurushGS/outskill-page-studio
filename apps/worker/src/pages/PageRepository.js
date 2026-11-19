@@ -25,6 +25,11 @@ export class PageRepository {
     return saved ?? this.bundled[slug] ?? null;
   }
 
+  /** Only pages saved from the studio. Bundled templates are starting designs, never public pages. */
+  async findSaved(slug) {
+    return this.kv.get(this.#key(slug), 'json');
+  }
+
   async get(slug) {
     const page = await this.find(slug);
     if (!page) throw new HttpError(404, `No page with slug "${slug}"`);

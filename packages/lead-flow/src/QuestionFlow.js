@@ -60,6 +60,18 @@ export class QuestionFlow {
    * The payload the backend's response API takes for one answer, or null if
    * there is nothing to send. `value` is the picked optionId or the typed text.
    */
+  /**
+   * An answer as one readable field for analytics: the question's title as a
+   * snake_case key ("What do you currently do?" → what_do_you_currently_do)
+   * and the picked option's title or the typed text. null when unanswered.
+   */
+  static fieldFor(question, value) {
+    const answer = QuestionFlow.answerFor(question, value);
+    if (!answer) return null;
+    const key = String(question.title || `question_${question.id}`).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 50) || `question_${question.id}`;
+    return [key, answer.responses.join(', ')];
+  }
+
   static answerFor(question, value) {
     const base = {
       questionId: question.id,
