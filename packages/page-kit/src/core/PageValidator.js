@@ -59,7 +59,7 @@ export class PageValidator {
     if (!String(campaign.name || '').trim()) errors.push('Campaign name is required');
     if (!SLUG_PATTERN.test(campaign.id || '')) errors.push('Campaign ID must be lowercase letters, numbers and dashes, e.g. "nov-ai-jobs"');
     if (campaign.redirectUrl && !/^https?:\/\/\S+$/i.test(campaign.redirectUrl)) errors.push('Redirect URL must start with https:// (or leave it empty)');
-    if (!campaign.formUrl) errors.push('Form URL is required (the link of the application form)');
+    if (!campaign.formUrl) errors.push('Form URL is required: choose the application form on the Campaign tab');
     else if (!parseFormUrl(campaign.formUrl)) errors.push(`Form URL must look like ${FORM_URL_EXAMPLE} (program ID / form ID / campaign ID; the campaign ID is optional)`);
     return errors;
   }

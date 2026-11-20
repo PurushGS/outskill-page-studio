@@ -18,7 +18,7 @@ export function findFormat(id) {
   return FORMATS.find((f) => f.id === id) ?? null;
 }
 
-export const FORM_URL_EXAMPLE = 'https://applications.growthschool.io/5122/24542/19240';
+export const FORM_URL_EXAMPLE = 'https://applications.growthschool.io/1426/24774';
 
 /**
  * The application form's link, pasted in the studio. Any host works

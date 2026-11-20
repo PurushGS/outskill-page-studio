@@ -64,3 +64,16 @@ test('collector remembers the first touch and a stable visitor id', () => {
   assert.equal(first.firstTouch.params.utm_source, 'youtube');
   assert.equal(second.visitorId(), second.visitorId());
 });
+
+test('the studio form list: links are built from the program and form ID, and found again from a saved link', async () => {
+  const { APPLICATION_FORMS, PROGRAM_ID, findApplicationForm, formLabel, formUrlFor } = await import('../packages/attribution/src/applicationForms.js');
+  assert.equal(PROGRAM_ID, 1426);
+  assert.equal(APPLICATION_FORMS.length, 12);
+  assert.equal(new Set(APPLICATION_FORMS.map((f) => f.formId)).size, 12, 'no form listed twice');
+  assert.equal(formUrlFor(24774), 'https://applications.growthschool.io/1426/24774');
+  assert.deepEqual(parseFormUrl(formUrlFor(24786)), { programId: 1426, formId: 24786, campaignId: null });
+  assert.equal(formLabel(findApplicationForm('https://applications.growthschool.io/1426/24777')), 'Instagram · IND (24777)');
+  assert.equal(findApplicationForm('https://applications.growthschool.io/5122/24774'), null, 'another program is not one of ours');
+  assert.equal(findApplicationForm('https://applications.growthschool.io/1426/99999'), null);
+  assert.equal(findApplicationForm(''), null);
+});

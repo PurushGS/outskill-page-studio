@@ -1,7 +1,8 @@
 import { el } from '../dom.js';
 import { Panel, field } from './Panel.js';
 import { FieldEditor } from './FieldEditor.js';
-import { findFormat, FORM_URL_EXAMPLE, parseFormUrl } from '../../../../packages/attribution/src/formats.js';
+import { findFormat, parseFormUrl } from '../../../../packages/attribution/src/formats.js';
+import { APPLICATION_FORMS, findApplicationForm, formLabel, formUrlFor } from '../../../../packages/attribution/src/applicationForms.js';
 import { buildTrackedLink, slugify } from '../../../../packages/attribution/src/attribution.js';
 import { QuestionFlow } from '../../../../packages/lead-flow/src/QuestionFlow.js';
 
@@ -70,15 +71,16 @@ export class CampaignPanel extends Panel {
 
     const formIds = el('small', { class: 'hint' });
     const showFormIds = (value) => {
-      const ids = parseFormUrl(value);
-      formIds.textContent = ids
-        ? `Program ${ids.programId} · Form ${ids.formId} · ${ids.campaignId ? `Campaign ${ids.campaignId}` : 'no campaign'}. The form's questions show on the page`
-        : value ? `Not a valid form link. It looks like ${FORM_URL_EXAMPLE}` : '';
+      formIds.textContent = parseFormUrl(value) ? `Form link: ${value}. The form's questions show on the page` : '';
     };
     showFormIds(campaign.formUrl);
     const questions = this.#questionList();
     questions.show(campaign.formUrl);
-    const formUrlInput = el('input', { class: 'input input--code', type: 'url', value: campaign.formUrl ?? '', placeholder: FORM_URL_EXAMPLE, oninput: (e) => { showFormIds(e.target.value.trim()); questions.show(e.target.value.trim()); this.store.set(['campaign', 'formUrl'], e.target.value.trim()); } });
+    const formSelect = this.#formSelect(campaign.formUrl, (formUrl) => {
+      showFormIds(formUrl);
+      questions.show(formUrl);
+      this.store.set(['campaign', 'formUrl'], formUrl);
+    });
     const redirectInput = el('input', { class: 'input input--code', type: 'url', value: campaign.redirectUrl ?? '', placeholder: 'https://…', oninput: (e) => this.store.set(['campaign', 'redirectUrl'], e.target.value.trim()) });
     const nameInput = el('input', {
       class: 'input',
@@ -100,8 +102,27 @@ export class CampaignPanel extends Panel {
         : 'Saved with every application. Renaming does not change the page link, so shared links keep working'),
       field('Page link', pageLink),
       field('Redirect URL', redirectInput, 'Optional. After someone applies, they see a thank-you message and a 5-second countdown, then go to this link. Takes the place of the WhatsApp community redirect'),
-      field('Form URL', [formUrlInput, formIds, questions.root], 'Required. The application form link: program ID / form ID / campaign ID (campaign is optional). Applications from this page go to that form'),
+      field('Application form', [formSelect, formIds, questions.root], 'Required. Applications from this page go to this form; the form link is built for you'),
     ];
+  }
+
+  /**
+   * The forms from applicationForms.js, grouped by channel. Choosing one sets
+   * the page's Form URL. A page saved with a link that isn't in the list keeps
+   * it, shown as "Current link", until another form is chosen.
+   */
+  #formSelect(formUrl, onChange) {
+    const known = findApplicationForm(formUrl);
+    // A template's placeholder link is no form at all: show the prompt instead.
+    const other = !known && parseFormUrl(formUrl) ? formUrl : '';
+    const channels = [...new Set(APPLICATION_FORMS.map((f) => f.channel))];
+    return el('select', { class: 'input', onchange: (e) => onChange(e.target.value) },
+      el('option', { value: '', disabled: true, selected: !known && !other }, 'Choose the application form…'),
+      other ? el('option', { value: other, selected: true }, `Current link: ${other}`) : null,
+      channels.map((channel) => el('optgroup', { label: channel },
+        APPLICATION_FORMS.filter((f) => f.channel === channel).map((f) =>
+          el('option', { value: formUrlFor(f.formId), selected: known === f }, formLabel(f))))),
+    );
   }
 
   /**
