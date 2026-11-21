@@ -549,7 +549,7 @@ test('bots and unfinished leads get no WebEngage event', async () => {
 });
 
 function relayEvent(page, overrides = {}) {
-  return { slug: page.slug, eventName: 'Lead Form Submitted', distinct_id: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', eventTime: '2026-11-19T09:06:42.743Z', eventData: { leadUUID: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', email: 'a@b.co' }, ...overrides };
+  return { slug: page.slug, eventName: 'Lead Form Submitted', distinct_id: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', email: 'a@b.co', eventTime: '2026-11-19T09:06:42.743Z', eventData: { leadUUID: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', email: 'a@b.co' }, ...overrides };
 }
 
 test('relay: when the browser cannot reach the backend, /api/leads/notify forwards the event, retrying once', async () => {
@@ -559,7 +559,7 @@ test('relay: when the browser cannot reach the backend, /api/leads/notify forwar
   assert.equal(res.status, 200);
   const calls = app.received.filter((c) => c.path === '/leads/webengage/external');
   assert.equal(calls.length, 2, 'failed once, then sent');
-  assert.deepEqual(calls[1].body, { eventName: 'Lead Form Submitted', distinct_id: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', eventTime: '2026-11-19T09:06:42.743Z', eventData: { leadUUID: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', email: 'a@b.co' } });
+  assert.deepEqual(calls[1].body, { eventName: 'Lead Form Submitted', distinct_id: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', email: 'a@b.co', eventTime: '2026-11-19T09:06:42.743Z', eventData: { leadUUID: '3f2b6c1e-8a4d-4f0b-9c2e-1d5a7b9e0f13', email: 'a@b.co' } });
   assert.equal(calls[1].headers.Authorization, undefined);
 
   const down = createTestApp({ webengageFailures: 5, env: { PAGES: app.env.PAGES } });
