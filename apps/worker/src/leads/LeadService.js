@@ -141,7 +141,7 @@ export class LeadService {
     if (body.eventName !== APPLICATION_EVENT) throw new HttpError(400, `Only the "${APPLICATION_EVENT}" event is accepted`);
     if (!UUID.test(String(body.distinct_id || ''))) throw new HttpError(400, 'distinct_id must be the leadUUID');
     if (!body.eventData || typeof body.eventData !== 'object' || JSON.stringify(body.eventData).length > EVENT_DATA_MAX) throw new HttpError(400, 'eventData must be an object of at most 10 KB');
-    const event = { eventName: body.eventName, distinct_id: body.distinct_id, eventTime: validTime(body.eventTime), eventData: body.eventData };
+    const event = { eventName: body.eventName, distinct_id: body.distinct_id, email: body.email, eventTime: validTime(body.eventTime), eventData: body.eventData };
     for (let attempt = 1; ; attempt++) {
       try {
         await this.api.webengageEvent(event);

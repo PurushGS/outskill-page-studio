@@ -114,8 +114,11 @@ export class LeadFormController {
 
   /**
    * The WebEngage event (named by the server, e.g. "Lead Form Submitted"),
-   * sent from here so it shows in the browser's Network tab. distinct_id is
-   * the leadUUID (repeated in eventData as leadUUID); eventData is the server's part
+   * sent from here so it shows in the browser's Network tab. email is sent
+   * top-level too, since the backend now uses it (not distinct_id) as the
+   * WebEngage userId, so the event lands on the lead's real profile instead
+   * of creating a new one per submission; distinct_id is still the leadUUID
+   * (repeated in eventData as leadUUID); eventData is the server's part
    * (resource link, campaign, form ids, UTMs) plus what was filled in: name, email,
    * phone and answers.
    * Not awaited: the success screen never waits for it.
@@ -125,6 +128,7 @@ export class LeadFormController {
     this.transport.webengageEvent(webengage.url, {
       eventName: webengage.eventName,
       distinct_id: this.lead.leadUUID,
+      email: lead.email,
       eventTime: new Date().toISOString(),
       eventData: {
         ...webengage.eventData,
