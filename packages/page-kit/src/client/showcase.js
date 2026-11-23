@@ -9,6 +9,7 @@ const GRADES = ['navy', 'amber', 'rose'];
 
 for (const stage of document.querySelectorAll('[data-hero-stage]')) heroCards(stage);
 for (const row of document.querySelectorAll('[data-reels]')) reelArrows(row);
+popIn(document.querySelectorAll('[data-pop]'));
 stickyBar();
 
 document.addEventListener('click', (event) => {
@@ -92,6 +93,16 @@ async function copyPrompt(button) {
     label.textContent = 'Select and copy';
   }
   setTimeout(() => { label.textContent = original; }, 2000);
+}
+
+/** The guide's form card pops up once it scrolls into view (shown straight away without IntersectionObserver). */
+function popIn(cards) {
+  if (!cards.length) return;
+  if (!('IntersectionObserver' in window)) return cards.forEach((c) => c.classList.add('is-in'));
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+  }, { threshold: 0.15 });
+  cards.forEach((c) => io.observe(c));
 }
 
 /** The bar steps aside while the hero, the application form or the footer (each with its own button) is on screen. */

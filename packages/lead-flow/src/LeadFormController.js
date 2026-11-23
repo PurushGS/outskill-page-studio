@@ -35,7 +35,7 @@ export class LeadFormController {
    * @param {string} [deps.basePath]  the public path pages live under ("" on outskill.live)
    * @param {(path: string) => void} [deps.showAddress]  how the address bar is changed after applying (null = never, e.g. preview)
    */
-  constructor({ form, successPanel, transport, tracker, attribution, validator = new LeadValidator(), createDelayMs = 800, redirect = (url) => { window.location.href = url; }, redirectSeconds = 5, basePath = '', showAddress = (path) => { window.history.replaceState(window.history.state, '', path + window.location.search + window.location.hash); } }) {
+  constructor({ form, successPanel, transport, tracker, attribution, validator = new LeadValidator(), createDelayMs = 800, redirect = (url) => { window.location.href = url; }, redirectSeconds = 3, basePath = '', showAddress = (path) => { window.history.replaceState(window.history.state, '', path + window.location.search + window.location.hash); } }) {
     this.form = form;
     this.successPanel = successPanel;
     this.transport = transport;
@@ -325,11 +325,11 @@ export class LeadFormController {
     this.successPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     if (goesOn) this.#countdown(redirectUrl, 'Taking you to the next step');
-    else if (/^https?:\/\//i.test(whatsappUrl || '')) this.#countdown(whatsappUrl, 'Taking you to our WhatsApp community');
+    else if (/^https?:\/\//i.test(whatsappUrl || '')) this.#countdown(whatsappUrl, 'Redirecting you to the WhatsApp community');
   }
 
   /**
-   * "Taking you to … in 5…", then leaves the page. "Stay on this page", or
+   * A big 3, 2, 1 under "Redirecting you to …", then leaves the page. "Stay on this page", or
    * clicking any button on the thank-you screen, stops it. The studio preview
    * (redirect = null) shows the countdown but never leaves.
    */
@@ -344,11 +344,16 @@ export class LeadFormController {
     const show = () => {
       if (!note) return;
       const doc = note.ownerDocument;
+      const count = doc.createElement('b');
+      count.className = 'pk-count';
+      count.textContent = String(left);
+      const text = doc.createElement('span');
+      text.textContent = `${message} in`;
       const button = doc.createElement('button');
       button.type = 'button';
       button.textContent = 'Stay on this page';
       button.addEventListener('click', stay);
-      note.replaceChildren(`${message} in ${left}s… `, button);
+      note.replaceChildren(text, count, button);
       note.hidden = false;
     };
     show();

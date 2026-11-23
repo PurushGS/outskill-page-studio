@@ -1,5 +1,5 @@
 import { html } from '../../core/html.js';
-import { ShowcaseBlock, TONE_FIELD, svg } from './ShowcaseBlock.js';
+import { ShowcaseBlock, TONE_FIELD, richText, svg } from './ShowcaseBlock.js';
 
 /**
  * "See exactly what you'll get": a real guide with its first steps open and
@@ -89,23 +89,4 @@ export class GuidePreview extends ShowcaseBlock {
       ${s.prompt ? html`<div class="o-prompt"><div class="o-prompt-h"><span${this.editable(`steps.${i}.promptLabel`)}>${s.promptLabel || 'Prompt'}</span><button type="button" class="o-copy" data-copy-text>${svg('copy')}Copy</button></div><pre${this.editable(`steps.${i}.prompt`)}>${s.prompt}</pre></div>` : ''}
     </div>`;
   }
-}
-
-/** Plain text to paragraphs and lists: "- " lines become bullets, "1. " lines a numbered list. */
-function richText(text) {
-  const out = [];
-  let list = null;
-  for (const line of String(text || '').split('\n').map((l) => l.trim()).filter(Boolean)) {
-    const bullet = line.match(/^[-•]\s+(.*)$/);
-    const number = line.match(/^\d+[.)]\s+(.*)$/);
-    const kind = bullet ? 'ul' : number ? 'ol' : null;
-    if (kind) {
-      if (!list || list.kind !== kind) out.push(list = { kind, items: [] });
-      list.items.push((bullet || number)[1]);
-    } else {
-      list = null;
-      out.push(html`<p>${line}</p>`);
-    }
-  }
-  return out.map((part) => (part.kind === 'ul' ? html`<ul>${part.items.map((t) => html`<li>${t}</li>`)}</ul>` : part.kind === 'ol' ? html`<ol>${part.items.map((t) => html`<li>${t}</li>`)}</ol>` : part));
 }

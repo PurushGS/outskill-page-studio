@@ -29,7 +29,7 @@
   },
   "integrations": {
     "resources": [],
-    "whatsappCommunityUrl": "https://chat.whatsapp.com/REPLACE_WITH_COMMUNITY_INVITE"
+    "whatsappCommunityUrl": "https://links.stayingahead.com/SA-RC"
   },
   "blocks": [
     {
@@ -612,8 +612,8 @@
         "submitLabel": "Get free access",
         "whatsappConsent": "Email me when new guides go live",
         "privacyNote": "No spam. Unsubscribe in one click.",
-        "successTitle": "You’re in!",
-        "successText": "The library is yours. We’ve also sent the link to your email and WhatsApp.",
+        "successTitle": "Thanks for signing up!",
+        "successText": "We’ve sent this resource to your email and WhatsApp. You’re a valuable Outskill learner. We’re redirecting you to the world’s largest AI community now.",
         "whatsappLabel": "Join the WhatsApp community"
       }
     },

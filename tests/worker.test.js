@@ -265,7 +265,7 @@ test('end to end: create page → questions → lead → answers → complete, a
   assert.equal(received.at(-1).path, '/leads/application/completed');
   assert.equal(received.at(-1).method, 'PATCH');
   assert.deepEqual(done.resources, [{ label: 'Open the guide', url: 'https://example.com/guide' }]);
-  assert.equal(done.whatsappUrl, '', 'the template\'s placeholder invite is not passed on');
+  assert.equal(done.whatsappUrl, 'https://links.stayingahead.com/SA-RC', 'the page\'s WhatsApp community link');
   assert.equal(done.redirectUrl, 'https://next.example.com/thanks', 'the redirect is the one set on the Campaign tab, not the backend\'s');
 });
 
@@ -524,7 +524,7 @@ test('completing returns the WebEngage event for the browser to send: the backen
     program_id: 5122,
     form_id: 24542,
     campaign_id: 19240,
-    whatsapp_url: '',
+    whatsapp_url: 'https://links.stayingahead.com/SA-RC',
     utm_source: 'instagram',
     utm_medium: 'story',
     utm_campaign: 'webengage-test/ai-jobs-ig-nov',

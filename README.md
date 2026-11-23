@@ -28,6 +28,9 @@ You never deploy anything. **Publish** in the studio is all it takes to put a pa
    - If it has pages, pick one from **Page**.
    - If it has none, the template opens as a new page, ready to edit.
    - **+ New page** starts a new page in the selected format with the design you're looking at.
+   - **Duplicate** copies the page you're on into a new page with everything kept (application form, PDF, links, redirect). Rename the campaign, which makes the new link, then Publish. In the Content list, **⧉** copies a single section right below itself.
+   - **The Outskill guide page is the default design** (the guide itself is the landing page): Outskill logo at the top, video thumbnail beside the title, the first two steps open, the sign-up card below them, and every other step blurred until someone applies. Open **Guide page · Showcase** (or pick a format with no pages yet) and press **+ New page**. Its sections are Guide card, Guide steps, the application form (Look: Guide) and Locked steps. Set **How many steps are open** in Guide steps (2 by default).
+   - **After someone applies** (every page): "Thanks for signing up!" with the resource text, a 3, 2, 1 countdown, then the WhatsApp community opens (Campaign tab → WhatsApp community invite link; the templates use https://links.stayingahead.com/SA-RC).
    - **The Outskill library design** (dark hero, colour cards, white form card): open **Workflow library · Showcase** under YouTube, then press **+ New page**. Its sections are the "Showcase · …" blocks; each light or dark section can be switched under **Section colour**. The application form uses its **Showcase** look (form block → **Look**).
 3. On the **Campaign** tab of a new page:
    - Type the **campaign name**. The page link is made from it (`AI Jobs · Nov 2026` → `/ai-jobs-nov-2026`) and cannot change after publishing. Renaming the campaign later keeps the same link.

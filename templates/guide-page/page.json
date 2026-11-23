@@ -1,0 +1,193 @@
+{
+  "slug": "guide-page",
+  "meta": {
+    "title": "Apply to 100 Jobs in One Night with ChatGPT | Outskill",
+    "description": "ChatGPT’s agent mode finds jobs on LinkedIn and Indeed, tailors your resume for each role, and applies for you. Free step-by-step guide.",
+    "lang": "en"
+  },
+  "campaign": {
+    "format": "youtube",
+    "name": "Guide page · Showcase",
+    "id": "guide-page",
+    "formUrl": "https://applications.growthschool.io/PROGRAM_ID/FORM_ID/CAMPAIGN_ID"
+  },
+  "theme": {
+    "colors": {
+      "background": "#07080b",
+      "surface": "#111214",
+      "text": "#f5f5f4",
+      "muted": "#a3a6aa",
+      "accent": "#b8ef43",
+      "accentText": "#0b0b0c",
+      "border": "#2a2a2e"
+    },
+    "fonts": {
+      "heading": "Fira Sans",
+      "body": "Fira Sans"
+    },
+    "radius": 10
+  },
+  "integrations": {
+    "resources": [],
+    "whatsappCommunityUrl": "https://links.stayingahead.com/SA-RC"
+  },
+  "blocks": [
+    {
+      "id": "top",
+      "type": "sc-guide-card",
+      "props": {
+        "barCtaLabel": "Get free access",
+        "barCtaHref": "#join",
+        "grade": "amber",
+        "icon": "target",
+        "category": "Career and Jobs",
+        "title": "Apply to 100 Jobs in One Night with ChatGPT",
+        "description": "ChatGPT’s agent mode finds jobs on LinkedIn and Indeed, tailors your resume for each role, and applies for you while you watch the browser work.",
+        "ctaLabel": "Unlock the full guide",
+        "ctaHref": "#join",
+        "videoUrl": "https://www.youtube.com/watch?v=rcybc6fPioY",
+        "videoLabel": "Watch the video",
+        "copyLabel": "Copy link",
+        "details": [
+          {
+            "label": "Category",
+            "value": "Career and Jobs"
+          },
+          {
+            "label": "Steps",
+            "value": "6"
+          },
+          {
+            "label": "Prompts",
+            "value": "4"
+          },
+          {
+            "label": "Tools",
+            "value": "ChatGPT, LinkedIn, Indeed"
+          },
+          {
+            "label": "Format",
+            "value": "Written guide"
+          },
+          {
+            "label": "Price",
+            "value": "Free with sign-up"
+          }
+        ],
+        "brand": "Outskill",
+        "brandLogo": "",
+        "brandHref": "https://www.outskill.com/"
+      }
+    },
+    {
+      "id": "guide",
+      "type": "sc-guide-steps",
+      "props": {
+        "indexLabel": "In this guide",
+        "openSteps": "2",
+        "steps": [
+          {
+            "title": "Before You Start",
+            "body": "- A paid ChatGPT plan (Plus or higher). Agent mode isn’t on the free plan.\n- A LinkedIn account and an Indeed account, both logged in.\n- Your current resume as a file (PDF or Word).\n- 2 to 4 hours, since you stay nearby to clear CAPTCHAs.",
+            "promptLabel": "",
+            "prompt": "",
+            "note": ""
+          },
+          {
+            "title": "Load Your Resume and Map Roles",
+            "body": "This maps your resume to the job titles and keywords worth targeting.\n1. Open a new chat in ChatGPT.\n2. Upload your resume as an attachment.\n3. Paste the prompt below and press Enter.",
+            "promptLabel": "Prompt 1: Recruiter map",
+            "prompt": "Act as a senior recruiter. Based on my resume, list the 20 job titles I’m most qualified for and the exact keywords ATS systems scan for in each one.",
+            "note": "If most jobs later come back with a match score of 0, your titles were too broad. Re-run this prompt and ask it to be more specific."
+          },
+          {
+            "title": "Build Your Master Resume",
+            "body": "",
+            "promptLabel": "",
+            "prompt": "",
+            "note": ""
+          },
+          {
+            "title": "Turn on Agent Mode",
+            "body": "",
+            "promptLabel": "",
+            "prompt": "",
+            "note": ""
+          },
+          {
+            "title": "Search and Apply to Jobs",
+            "body": "",
+            "promptLabel": "",
+            "prompt": "",
+            "note": ""
+          },
+          {
+            "title": "Make the Interviews More Likely",
+            "body": "",
+            "promptLabel": "",
+            "prompt": "",
+            "note": ""
+          }
+        ],
+        "toolsLabel": "Tools used",
+        "tools": [
+          {
+            "name": "ChatGPT",
+            "url": "https://chatgpt.com",
+            "logo": ""
+          },
+          {
+            "name": "LinkedIn",
+            "url": "https://linkedin.com",
+            "logo": ""
+          },
+          {
+            "name": "Indeed",
+            "url": "https://indeed.com",
+            "logo": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": "apply",
+      "type": "lead-form",
+      "props": {
+        "layout": "guide",
+        "eyebrow": "Free forever",
+        "title": "Unlock the full guide",
+        "subtitle": "4 more steps, 4 prompts with Copy buttons, plus every other workflow in the library.",
+        "perks": [
+          {
+            "icon": "check",
+            "text": "Every step, prompt and tool link"
+          },
+          {
+            "icon": "check",
+            "text": "New resources every day"
+          },
+          {
+            "icon": "check",
+            "text": "763 AI tools, sorted and priced"
+          }
+        ],
+        "stats": [],
+        "formTitle": "",
+        "submitLabel": "Get free access",
+        "whatsappConsent": "Email me when new guides go live",
+        "privacyNote": "No spam. Unsubscribe in one click.",
+        "successTitle": "Thanks for signing up!",
+        "successText": "We’ve sent this resource to your email and WhatsApp. You’re a valuable Outskill learner. We’re redirecting you to the world’s largest AI community now.",
+        "whatsappLabel": "Join the WhatsApp community"
+      }
+    },
+    {
+      "id": "more",
+      "type": "sc-guide-rest",
+      "props": {
+        "label": "Unlock to read",
+        "href": "#join"
+      }
+    }
+  ]
+}

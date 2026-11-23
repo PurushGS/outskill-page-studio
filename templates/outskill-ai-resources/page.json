@@ -38,7 +38,7 @@
         "url": "https://outskill-ai-resources.tool-od.workers.dev/"
       }
     ],
-    "whatsappCommunityUrl": "https://chat.whatsapp.com/REPLACE_WITH_COMMUNITY_INVITE"
+    "whatsappCommunityUrl": "https://links.stayingahead.com/SA-RC"
   },
   "blocks": [
     {
@@ -331,8 +331,8 @@
         "submitLabel": "Get Free Access",
         "whatsappConsent": "Send me updates on WhatsApp",
         "privacyNote": "Takes 30 seconds. We never share your details.",
-        "successTitle": "You're in!",
-        "successText": "Your guide is unlocked. Join the community to get new workflows first.",
+        "successTitle": "Thanks for signing up!",
+        "successText": "We’ve sent this resource to your email and WhatsApp. You’re a valuable Outskill learner. We’re redirecting you to the world’s largest AI community now.",
         "whatsappLabel": "Join the WhatsApp community"
       }
     },

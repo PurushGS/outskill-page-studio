@@ -1,12 +1,13 @@
 import { el, debounce } from './dom.js';
 import { FORMATS, findFormat } from '../../../packages/attribution/src/formats.js';
+import { slugify } from '../../../packages/attribution/src/attribution.js';
 import { ThemePanel } from './panels/ThemePanel.js';
 import { BlocksPanel } from './panels/BlocksPanel.js';
 import { CampaignPanel } from './panels/CampaignPanel.js';
 import { PreviewFrame } from './PreviewFrame.js';
 
 /** New pages in a format with no pages yet start from this bundled template. */
-const BASE_TEMPLATE = 'outskill-ai-resources';
+const BASE_TEMPLATE = 'guide-page';
 
 /**
  * Wires the studio together: Format → Page → edit → Publish.
@@ -46,6 +47,7 @@ export class StudioApp {
       formatSelect: root.querySelector('#format-select'),
       pageSelect: root.querySelector('#page-select'),
       newPage: root.querySelector('#new-page'),
+      duplicatePage: root.querySelector('#duplicate-page'),
       status: root.querySelector('#status'),
       save: root.querySelector('#save'),
       unpublish: root.querySelector('#unpublish'),
@@ -136,6 +138,28 @@ export class StudioApp {
     this.#setStatus(`New ${findFormat(this.format).label} page: give it a campaign name and form URL on the Campaign tab, edit the design, then Publish.`);
   }
 
+  /**
+   * Like + New page, but the copy keeps everything: application form,
+   * redirect, resource PDF and links, WhatsApp link. Only the campaign name
+   * (and so the page link) is new: "<name> (copy)", to be renamed before publishing.
+   */
+  #duplicatePage() {
+    if (!this.#canLeaveCurrentPage()) return;
+    const page = this.store.page;
+    const copy = structuredClone(page);
+    const name = `${page.campaign?.name || 'Untitled'} (copy)`;
+    copy.slug = slugify(name);
+    copy.campaign = { ...page.campaign, name, id: slugify(name) };
+    delete copy.createdAt;
+    delete copy.updatedAt;
+    delete copy.unpublished;
+    this.isUnpublished = false;
+    this.store.load(copy, { draft: true });
+    this.ui.pageSelect.prepend(el('option', { value: '', selected: true }, `✎ Copy of ${page.campaign?.name || 'page'} (not published yet)`));
+    this.root.querySelector('[data-tab="campaign"]').click();
+    this.#setStatus('Duplicated: everything is copied, including the application form and PDF. Rename the campaign (that makes the new page link), then Publish.');
+  }
+
   // ---------- publishing ----------
 
   async #save() {
@@ -221,6 +245,7 @@ export class StudioApp {
     this.ui.formatSelect.addEventListener('change', (e) => this.#chooseFormat(e.target.value));
     this.ui.pageSelect.addEventListener('change', (e) => this.#openPage(e.target.value));
     this.ui.newPage.addEventListener('click', () => this.#startDraft(this.store.page));
+    this.ui.duplicatePage.addEventListener('click', () => this.#duplicatePage());
     this.ui.save.addEventListener('click', () => this.#save());
     this.ui.unpublish.addEventListener('click', () => this.#unpublish());
     this.ui.undo.addEventListener('click', () => this.store.undo());

@@ -71,8 +71,26 @@ export class BlocksPanel extends Panel {
         el('b', {}, label), el('small', {}, block.id)),
       el('button', { type: 'button', class: 'icon-btn', title: 'Move up', 'aria-label': `Move ${label} up`, disabled: i === 0, onclick: () => move(i - 1) }, '↑'),
       el('button', { type: 'button', class: 'icon-btn', title: 'Move down', 'aria-label': `Move ${label} down`, disabled: i === count - 1, onclick: () => move(i + 1) }, '↓'),
+      this.#duplicateButton(block, i, label),
       this.#removeButton(block, i, label),
     );
+  }
+
+  /** Copies a section (with everything in it) right below itself. The application form stays one per page. */
+  #duplicateButton(block, i, label) {
+    const only = block.type === REQUIRED_BLOCK;
+    return el('button', {
+      type: 'button',
+      class: 'icon-btn',
+      title: only ? 'A page has one application form' : 'Duplicate section',
+      'aria-label': only ? `${label} cannot be duplicated` : `Duplicate ${label}`,
+      disabled: only,
+      onclick: () => {
+        const id = this.#uniqueId(block.type);
+        this.store.mutate((page) => page.blocks.splice(i + 1, 0, { ...structuredClone(block), id }));
+        this.select(id);
+      },
+    }, '⧉');
   }
 
   /** Every page must keep its application form, so that one block can be moved but not removed. */

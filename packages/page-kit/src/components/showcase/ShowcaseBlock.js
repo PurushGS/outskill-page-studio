@@ -81,3 +81,22 @@ export function videoThumb(url, duration = '', extra = '') {
   const src = youtubeThumbnail(url);
   return html`<span class="o-vthumb">${src ? html`<img src="${src}" alt="" loading="lazy" decoding="async">` : ''}${extra}<span class="o-pbtn">${svg('play')}</span>${duration ? html`<span class="o-dur">${duration}</span>` : ''}</span>`;
 }
+
+/** Plain text to paragraphs and lists: "- " lines become bullets, "1. " lines a numbered list. */
+export function richText(text) {
+  const out = [];
+  let list = null;
+  for (const line of String(text || '').split('\n').map((l) => l.trim()).filter(Boolean)) {
+    const bullet = line.match(/^[-•]\s+(.*)$/);
+    const number = line.match(/^\d+[.)]\s+(.*)$/);
+    const kind = bullet ? 'ul' : number ? 'ol' : null;
+    if (kind) {
+      if (!list || list.kind !== kind) out.push(list = { kind, items: [] });
+      list.items.push((bullet || number)[1]);
+    } else {
+      list = null;
+      out.push(html`<p>${line}</p>`);
+    }
+  }
+  return out.map((part) => (part.kind === 'ul' ? html`<ul>${part.items.map((t) => html`<li>${t}</li>`)}</ul>` : part.kind === 'ol' ? html`<ol>${part.items.map((t) => html`<li>${t}</li>`)}</ol>` : part));
+}

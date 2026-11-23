@@ -297,7 +297,10 @@ img, svg { display: block; max-width: 100%; }
 
 .pk-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .pk-success__links { display: grid; gap: 10px; width: 100%; }
-.pk-redirect-note { margin: 0; font-size: 14px; }
+.pk-redirect-note { margin: 0; font-size: 14px; display: grid; justify-items: center; gap: 6px; }
+.pk-count { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--pk-accent); font: 700 30px/1 var(--pk-font-heading); color: var(--pk-text); animation: pk-tick 1s ease-out; }
+@keyframes pk-tick { from { transform: scale(1.25); opacity: .4; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pk-count { animation: none; } }
 .pk-redirect-note button { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 
 /* ---------- Tablet & desktop ---------- */

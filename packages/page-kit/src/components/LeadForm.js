@@ -1,8 +1,10 @@
 import { Component } from '../core/Component.js';
-import { html } from '../core/html.js';
+import { html, raw } from '../core/html.js';
 import { eyebrow, multiline } from '../core/ui.js';
 import { COUNTRIES, DEFAULT_COUNTRY } from '../../../lead-flow/src/countries.js';
 import { parseFormUrl } from '../../../attribution/src/formats.js';
+
+const TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 
 /**
  * The sign-up form. It only renders markup; behaviour (validation, the
@@ -19,7 +21,11 @@ export class LeadForm extends Component {
       key: 'layout',
       label: 'Look',
       kind: 'choice',
-      options: [{ value: 'classic', label: 'Classic (text beside the form)' }, { value: 'showcase', label: 'Showcase (green panel + white form card)' }],
+      options: [
+        { value: 'classic', label: 'Classic (text beside the form)' },
+        { value: 'showcase', label: 'Showcase (green panel + white form card, dark section)' },
+        { value: 'guide', label: 'Guide (same card on white, under the guide steps; perks become ticks)' },
+      ],
     },
     { key: 'eyebrow', label: 'Small label above title', kind: 'text' },
     { key: 'title', label: 'Title', kind: 'textarea' },
@@ -61,27 +67,44 @@ export class LeadForm extends Component {
     submitLabel: 'Send me the material',
     whatsappConsent: 'Send updates to my WhatsApp',
     privacyNote: 'No spam. Unsubscribe any time.',
-    successTitle: 'You are in!',
-    successText: 'We have sent the material to your email and WhatsApp.',
+    successTitle: 'Thanks for signing up!',
+    successText: 'We’ve sent this resource to your email and WhatsApp. You’re a valuable Outskill learner. We’re redirecting you to the world’s largest AI community now.',
     whatsappLabel: 'Join the WhatsApp community',
   };
 
-  /** The Showcase look uses the showcase blocks' stylesheet (see PageRenderer). */
+  /** The Showcase and Guide looks use the showcase blocks' stylesheet (see PageRenderer). */
   get stylesheet() {
-    return this.#showcase ? 'showcase' : null;
+    return this.#showcase || this.#guide ? 'showcase' : null;
   }
 
   get #showcase() {
     return this.props.layout === 'showcase';
   }
 
+  get #guide() {
+    return this.props.layout === 'guide';
+  }
+
   render() {
-    if (!this.#showcase) return super.render();
-    return html`<section class="pk-block ox ox--dark o-signup pk-${LeadForm.type}" id="${this.id}" data-block-id="${this.id}" data-block-type="${LeadForm.type}">${this.renderContent()}</section>`;
+    if (!this.#showcase && !this.#guide) return super.render();
+    const look = this.#guide ? 'ox--light o-guideform' : 'ox--dark o-signup';
+    return html`<section class="pk-block ox ${look} pk-${LeadForm.type}" id="${this.id}" data-block-id="${this.id}" data-block-type="${LeadForm.type}">${this.renderContent()}</section>`;
   }
 
   renderContent() {
     const p = this.props;
+    if (this.#guide) {
+      // Lines up with the guide steps' reading column (an empty sidebar column on the left).
+      return html`<div class="o-in"><div class="o-tbody"><div></div><div class="o-content"><div class="o-unlock o-pop" data-pop>
+        <div class="o-ul-l">
+          ${p.eyebrow ? html`<p class="o-lbl lime"${this.editable('eyebrow')}>${p.eyebrow}</p>` : ''}
+          <h2${this.editable('title')}>${multiline(p.title)}</h2>
+          ${p.subtitle ? html`<p${this.editable('subtitle')}>${p.subtitle}</p>` : ''}
+          ${p.perks.length ? html`<ul>${p.perks.map((perk, i) => html`<li>${raw(TICK)}<span${this.editable(`perks.${i}.text`)}>${perk.text}</span></li>`)}</ul>` : ''}
+        </div>
+        <div class="o-join" id="join">${this.#panel()}</div>
+      </div></div></div></div>`;
+    }
     if (this.#showcase) {
       return html`<div class="o-in"><div class="o-ctab">
         <div class="o-csum">
@@ -111,7 +134,7 @@ export class LeadForm extends Component {
     const form = parseFormUrl(campaign.formUrl);
     return html`<div class="pk-panel">
         <form class="pk-form" id="application-form" data-lead-form data-slug="${slug}" data-form-url="${campaign.formUrl || ''}" data-form-id="${form?.formId ?? ''}" novalidate>
-          <h3 class="pk-h3"${this.editable('formTitle')}>${p.formTitle}</h3>
+          ${p.formTitle ? html`<h3 class="pk-h3"${this.editable('formTitle')}>${p.formTitle}</h3>` : ''}
           ${this.#field('name', html`<input id="${this.id}-name" name="name" autocomplete="name" placeholder="Full name">`, 'Full name')}
           ${this.#field('email', html`<input id="${this.id}-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="Email address">`, 'Email address')}
           <div class="pk-field">
