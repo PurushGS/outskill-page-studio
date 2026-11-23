@@ -170,18 +170,23 @@ export class StudioApp {
     try {
       const wasDraft = this.store.isDraft;
       const wasUnpublished = this.isUnpublished;
-      const { page } = wasDraft ? await this.api.createPage(this.store.page) : await this.api.savePage(this.store.page);
+      const oldSlug = this.store.page.slug;
+      const newSlug = slugify(this.store.page.campaign?.name ?? '');
+      const moving = !wasDraft && newSlug && newSlug !== oldSlug;
+      const { page } = wasDraft ? await this.api.createPage(this.store.page)
+        : moving ? await this.api.renamePage(oldSlug, this.store.page)
+        : await this.api.savePage(this.store.page);
       this.isUnpublished = false;
-      // A new page comes back with its final page link, so load it; an update keeps its undo history.
-      if (wasDraft) this.store.load(page);
+      // A new or moved page comes back with its final page link, so load it; an update keeps its undo history.
+      if (wasDraft || moving) this.store.load(page);
       else this.store.markSaved();
       this.#updatePublishControls();
-      if (wasDraft || wasUnpublished) {
+      if (wasDraft || wasUnpublished || moving) {
         await this.#refreshPages();
         this.#fillPageSelect(this.pages.filter((p) => p.format === this.format), page.slug);
       }
       const link = this.#pageLink(page.slug);
-      const done = wasDraft ? 'New page is live' : wasUnpublished ? 'Page is live again' : 'Published';
+      const done = wasDraft ? 'New page is live' : moving ? `Published at the new link (the old one, /${oldSlug}, still opens it)` : wasUnpublished ? 'Page is live again' : 'Published';
       this.#setStatus(`${done}! Page link:`, 'ok', link);
     } catch (err) {
       if (err.status === 401) this.ui.token.hidden = false;

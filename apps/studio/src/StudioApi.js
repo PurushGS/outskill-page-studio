@@ -63,6 +63,11 @@ export class StudioApi {
     return this.#request('PUT', `/api/pages/${page.slug}`, page);
   }
 
+  /** Publishes the page at the link made from its new campaign name; the old link keeps opening it. */
+  renamePage(slug, page) {
+    return this.#request('POST', `/api/pages/${slug}/rename`, page);
+  }
+
   /** Takes the page off the web; it stays in the studio and Publish brings it back. */
   unpublishPage(slug) {
     return this.#request('POST', `/api/pages/${slug}/unpublish`);

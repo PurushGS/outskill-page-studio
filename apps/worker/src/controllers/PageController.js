@@ -9,9 +9,15 @@ export class PageController {
     this.auth = auth;
   }
 
-  renderPage = async (_request, { slug }) => {
+  renderPage = async (request, { slug }) => {
     // Templates open in the studio as starting designs; only published pages are on the web.
     const page = await this.pages.findSaved(slug);
+    // A renamed page's old link (and its /<programId>/<formId> form) opens the new one. Not a permanent redirect: the name could change again.
+    if (page && page.slug !== slug) {
+      const url = new URL(request.url);
+      url.pathname = url.pathname.replace(`/${slug}`, `/${page.slug}`);
+      return new Response(null, { status: 302, headers: { Location: url.toString(), 'Cache-Control': 'public, max-age=60' } });
+    }
     if (!page) return htmlResponse(messageHtml('Page not found', `No page called “${cleanSlug(slug)}”.`), { status: 404, headers: { 'Cache-Control': 'no-store' } });
     if (page.unpublished) {
       return htmlResponse(messageHtml('This page is no longer available', 'The campaign has ended. Check the latest video or post for a new link.'), { status: 404, headers: { 'Cache-Control': 'no-store' } });
@@ -40,6 +46,13 @@ export class PageController {
     this.auth.assert(request);
     const page = await this.pageService.update(slug, await readJson(request));
     return json({ ok: true, url: `/${slug}`, page });
+  };
+
+  /** Publishes the page at the link made from its new campaign name; the old link keeps working. */
+  rename = async (request, { slug }) => {
+    this.auth.assert(request);
+    const page = await this.pageService.rename(slug, await readJson(request));
+    return json({ ok: true, url: `/${page.slug}`, page, previousSlug: slug });
   };
 
   unpublish = async (request, { slug }) => {

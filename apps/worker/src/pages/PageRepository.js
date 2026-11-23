@@ -20,13 +20,22 @@ export class PageRepository {
     this.bundled = bundledTemplates;
   }
 
+  /** A renamed page is found by its old link too: the old entry only points to the new one. */
   async find(slug) {
-    const saved = await this.kv.get(this.#key(slug), 'json');
+    const saved = await this.findSaved(slug);
     return saved ?? this.bundled[slug] ?? null;
   }
 
-  /** Only pages saved from the studio. Bundled templates are starting designs, never public pages. */
+  /** Only pages saved from the studio, following old links to the page's current one. Bundled templates are starting designs, never public pages. */
   async findSaved(slug) {
+    let page = await this.findEntry(slug);
+    // A few renames at most; the limit only guards against a loop.
+    for (let hops = 0; page?.movedTo && hops < 10; hops += 1) page = await this.findEntry(page.movedTo);
+    return page?.movedTo ? null : page;
+  }
+
+  /** The KV entry itself: a page, or { slug, movedTo } left behind when a page was renamed. */
+  async findEntry(slug) {
     return this.kv.get(this.#key(slug), 'json');
   }
 
@@ -58,7 +67,7 @@ export class PageRepository {
       const batch = await this.kv.list({ prefix: 'page:', cursor });
       for (const { name, metadata } of batch.keys) {
         const slug = name.slice('page:'.length);
-        all.set(slug, { slug, ...metadata, source: 'studio' });
+        if (!metadata?.movedTo) all.set(slug, { slug, ...metadata, source: 'studio' });
       }
       cursor = batch.list_complete ? undefined : batch.cursor;
     } while (cursor);
@@ -78,5 +87,6 @@ function summarize(page) {
     campaignId: page.campaign?.id ?? '',
     formUrl: page.campaign?.formUrl ?? '',
     unpublished: Boolean(page.unpublished),
+    ...(page.movedTo ? { movedTo: page.movedTo } : {}),
   };
 }

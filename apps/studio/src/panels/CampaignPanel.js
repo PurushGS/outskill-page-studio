@@ -57,16 +57,23 @@ export class CampaignPanel extends Panel {
   }
 
   /**
-   * The page link is made from the campaign name when the page is first
-   * published, then stays fixed. The campaign ID (utm_campaign in tracked
-   * links) is the page link, so there is nothing extra to type.
+   * The page link is made from the campaign name. Renaming a published page
+   * moves it to the new link on Publish, and the old link keeps opening it.
+   * The campaign ID (utm_campaign in tracked links) is the page link, so
+   * there is nothing extra to type.
    */
   #campaignFields() {
     const { campaign, slug } = this.store.page;
     const draft = this.store.isDraft;
 
     const pageLink = el('code', { class: 'page-link' });
-    const showLink = (value) => { pageLink.textContent = `${this.publicBaseUrl.replace(/^https?:\/\//, '')}/${value || '…'}`; };
+    const linkNote = el('small', { class: 'hint' });
+    const host = this.publicBaseUrl.replace(/^https?:\/\//, '');
+    const showLink = (value) => {
+      pageLink.textContent = `${host}/${value || '…'}`;
+      const moving = !draft && value && value !== slug;
+      linkNote.textContent = moving ? `Publish to move the page here. The old link, ${host}/${slug}, will open the new one.` : '';
+    };
     showLink(slug);
 
     const formIds = el('small', { class: 'hint' });
@@ -88,19 +95,18 @@ export class CampaignPanel extends Panel {
       placeholder: 'e.g. AI Jobs guide · Nov 2026',
       oninput: (e) => {
         const entries = [[['campaign', 'name'], e.target.value]];
-        if (draft) {
-          entries.push([['slug'], slugify(e.target.value)], [['campaign', 'id'], slugify(e.target.value)]);
-          showLink(slugify(e.target.value));
-        }
+        // A published page keeps its slug until Publish moves it, so its saves still go to the right page.
+        if (draft) entries.push([['slug'], slugify(e.target.value)], [['campaign', 'id'], slugify(e.target.value)]);
+        showLink(slugify(e.target.value) || (draft ? '' : slug));
         this.store.setMany(entries);
       },
     });
 
     return [
       field('Campaign name', nameInput, draft
-        ? 'Saved with every application. The page link is made from it, so choose carefully: the link cannot change after publishing'
-        : 'Saved with every application. Renaming does not change the page link, so shared links keep working'),
-      field('Page link', pageLink),
+        ? 'Saved with every application. The page link is made from it'
+        : 'Saved with every application. Renaming changes the page link when you Publish; links already shared keep working'),
+      field('Page link', [pageLink, linkNote]),
       field('Redirect URL', redirectInput, 'Optional. After someone applies, they see a thank-you message and a 5-second countdown, then go to this link. Takes the place of the WhatsApp community redirect'),
       field('Application form', [formSelect, formIds, questions.root], 'Required. Applications from this page go to this form; the form link is built for you'),
     ];

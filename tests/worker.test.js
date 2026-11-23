@@ -178,6 +178,46 @@ test('saving keeps the format and link fixed, while the campaign name and form U
   assert.equal(saved.page.campaign.formUrl, 'https://applications.growthschool.io/5122/302/2002');
 });
 
+test('renaming the campaign moves the page to a new link; the old link (and its form address) opens the new one', async () => {
+  const { request } = createTestApp();
+  const { body } = await createPage(request, { format: 'youtube', name: 'Free LLM Video YT (copy)' });
+  const page = body.page;
+  assert.equal(page.slug, 'free-llm-video-yt-copy');
+
+  const renamed = { ...page, campaign: { ...page.campaign, name: 'Free LLM Video YT' } };
+  assert.equal((await request('POST', `/api/pages/${page.slug}/rename`, { body: renamed })).status, 401, 'needs the studio token');
+  const res = await request('POST', `/api/pages/${page.slug}/rename`, { body: renamed, headers: auth });
+  assert.equal(res.status, 200);
+  const moved = (await res.json()).page;
+  assert.equal(moved.slug, 'free-llm-video-yt');
+  assert.equal(moved.campaign.id, 'free-llm-video-yt', 'utm_campaign follows the new link');
+  assert.equal(moved.campaign.name, 'Free LLM Video YT');
+  assert.equal(moved.createdAt, page.createdAt);
+
+  assert.equal((await request('GET', '/free-llm-video-yt')).status, 200);
+  const old = await request('GET', '/free-llm-video-yt-copy?utm_source=yt');
+  assert.equal(old.status, 302);
+  assert.equal(old.headers.get('Location'), 'https://pages.test/free-llm-video-yt?utm_source=yt');
+  assert.equal((await request('GET', '/free-llm-video-yt-copy/5122/24542/19240')).headers.get('Location'), 'https://pages.test/free-llm-video-yt/5122/24542/19240');
+
+  const { pages } = await (await request('GET', '/api/pages?format=youtube')).json();
+  assert.deepEqual(pages.filter((p) => p.source === 'studio').map((p) => p.slug), ['free-llm-video-yt'], 'the studio lists the page once, at its new link');
+  assert.equal((await request('POST', '/api/leads', { body: submission(page) })).status, 201, 'a visitor still on the old page can apply');
+  assert.equal((await request('PUT', `/api/pages/${page.slug}`, { body: page, headers: auth })).status, 409, 'a stale studio tab cannot overwrite the old link');
+  assert.equal((await createPage(request, { format: 'x', name: 'Free LLM Video YT copy' })).res.status, 409, 'the old link stays taken');
+
+  // Renaming back takes the page's own old link again.
+  const back = await request('POST', '/api/pages/free-llm-video-yt/rename', { body: { ...moved, campaign: { ...moved.campaign, name: 'Free LLM Video YT copy' } }, headers: auth });
+  assert.equal((await back.json()).page.slug, 'free-llm-video-yt-copy');
+  assert.equal((await request('GET', '/free-llm-video-yt-copy')).status, 200);
+  assert.equal((await request('GET', '/free-llm-video-yt')).status, 302);
+
+  // Another page's link is never taken.
+  await createPage(request, { format: 'x', name: 'Taken name' });
+  const clash = await request('POST', '/api/pages/free-llm-video-yt-copy/rename', { body: { ...moved, slug: 'free-llm-video-yt-copy', campaign: { ...moved.campaign, name: 'Taken name' } }, headers: auth });
+  assert.equal(clash.status, 409);
+});
+
 test('unpublish takes a page and its form offline; Publish brings it back unchanged at the same link', async () => {
   const { request, received } = createTestApp();
   const { body } = await createPage(request, { format: 'x', name: 'X thread Dec', formUrl: 'https://applications.growthschool.io/5122/77/2003' });

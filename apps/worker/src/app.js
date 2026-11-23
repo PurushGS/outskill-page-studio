@@ -40,6 +40,7 @@ export function createApp(env) {
     .post('/api/pages', pageController.create)
     .get('/api/pages/:slug', pageController.get)
     .put('/api/pages/:slug', pageController.save)
+    .post('/api/pages/:slug/rename', pageController.rename)
     .post('/api/pages/:slug/unpublish', pageController.unpublish)
     .get('/api/templates/:slug', pageController.template)
     .get('/api/config', (request) => json({ publicBaseUrl: publicBaseUrl(env, request) }))
